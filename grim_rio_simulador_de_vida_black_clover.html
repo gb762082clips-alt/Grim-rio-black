@@ -1,0 +1,3275 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0d0c13">
+  <title>GRIMÓRIO — Simulador de Vida · Black Clover</title>
+  <style>
+    :root {
+      --bg: #0d0c13;
+      --panel: #171520;
+      --panel2: #201d2b;
+      --line: #393347;
+      --gold: #d8b66a;
+      --gold-dim: rgba(216, 182, 106, 0.16);
+      --text: #f4f0e8;
+      --muted: #aaa3b5;
+      --red: #c45462;
+      --green: #6ca58b;
+      --amber: #d99b4e;
+      --violet: #9d7fe6;
+      --blue: #6a9fd8;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(ellipse at 75% -15%, rgba(62, 43, 88, 0.48) 0%, transparent 52%),
+        radial-gradient(ellipse at 10% 90%, rgba(216, 182, 106, 0.08) 0%, transparent 45%),
+        var(--bg);
+      color: var(--text);
+      font: 15px/1.6 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      min-height: 100vh;
+    }
+
+    button, input, textarea, select { font: inherit; }
+    button { cursor: pointer; transition: all 0.18s ease; }
+
+    .shell {
+      max-width: 1320px;
+      margin: auto;
+      padding: 20px 16px 64px;
+    }
+
+    /* Cabeçalho */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .brand { display: flex; gap: 14px; align-items: center; }
+
+    .sigil {
+      width: 50px;
+      height: 50px;
+      border: 1px solid var(--gold);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: var(--gold);
+      font-size: 26px;
+      background: rgba(216, 182, 106, 0.06);
+      box-shadow: 0 0 28px rgba(216, 182, 106, 0.22);
+    }
+
+    .brand h1 {
+      font: 700 22px Georgia, serif;
+      letter-spacing: 2.5px;
+      margin: 0;
+      color: var(--text);
+    }
+
+    .brand small {
+      display: block;
+      color: var(--muted);
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-size: 10px;
+      margin-top: 2px;
+    }
+
+    .header-controls {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-badge {
+      font-size: 12px;
+      color: var(--green);
+      border: 1px solid #3f6657;
+      background: rgba(26, 43, 36, 0.65);
+      padding: 6px 12px;
+      border-radius: 30px;
+    }
+
+    .status-badge.busy {
+      color: var(--gold);
+      border-color: #705b32;
+      background: rgba(54, 43, 21, 0.65);
+    }
+
+    .status-badge.dead {
+      color: var(--red);
+      border-color: #6e3139;
+      background: rgba(54, 24, 30, 0.65);
+    }
+
+    .tts-toggle.active {
+      border-color: var(--gold);
+      color: var(--gold);
+      background: rgba(216, 182, 106, 0.16);
+    }
+
+    /* Hero */
+    .hero {
+      padding: 20px 24px;
+      border: 1px solid var(--line);
+      border-radius: 18px;
+      background: linear-gradient(125deg, #231c30 0%, #171520 68%);
+      margin-bottom: 18px;
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.35);
+    }
+
+    .eyebrow {
+      color: var(--gold);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      font-size: 11px;
+      font-weight: 600;
+    }
+
+    .hero h2 {
+      font: 28px/1.15 Georgia, serif;
+      margin: 6px 0;
+      color: var(--text);
+    }
+
+    .hero p {
+      max-width: 900px;
+      color: var(--muted);
+      margin: 6px 0 0;
+      font-size: 13.5px;
+    }
+
+    /* Layout Principal */
+    .grid {
+      display: grid;
+      grid-template-columns: 1.45fr 0.85fr;
+      gap: 18px;
+      align-items: start;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      padding: 18px;
+      margin-bottom: 16px;
+      box-shadow: 0 8px 26px rgba(0, 0, 0, 0.24);
+    }
+
+    .panel h3 {
+      font: 20px Georgia, serif;
+      margin: 0;
+      color: var(--text);
+    }
+
+    .section-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+
+    .muted { color: var(--muted); }
+
+    /* Formulários */
+    .formgrid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .field { display: flex; flex-direction: column; gap: 6px; }
+    .field.full { grid-column: 1 / -1; }
+
+    label {
+      font-size: 12px;
+      color: var(--muted);
+      font-weight: 500;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      background: #100f17;
+      color: var(--text);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 10px 12px;
+      outline: none;
+      transition: border-color 0.15s ease;
+    }
+
+    input:focus, textarea:focus, select:focus { border-color: var(--gold); }
+    textarea { min-height: 86px; resize: vertical; }
+
+    /* Botões */
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .btn {
+      border: 1px solid var(--line);
+      background: var(--panel2);
+      color: var(--text);
+      padding: 9px 14px;
+      border-radius: 10px;
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .btn:hover:not(:disabled) {
+      border-color: var(--gold);
+      background: #272335;
+    }
+
+    .btn.primary {
+      background: var(--gold);
+      color: #1c1509;
+      border-color: var(--gold);
+      font-weight: 700;
+    }
+
+    .btn.primary:hover:not(:disabled) {
+      background: #e3c47c;
+      border-color: #e3c47c;
+    }
+
+    .btn.subtle {
+      padding: 6px 10px;
+      font-size: 12px;
+      background: rgba(32, 29, 43, 0.82);
+    }
+
+    .btn.time-btn {
+      padding: 7px 11px;
+      font-size: 12px;
+      background: #13111c;
+      border-color: #463f57;
+      color: #dfd8eb;
+    }
+
+    .btn.time-btn:hover:not(:disabled) {
+      border-color: var(--gold);
+      color: var(--gold);
+    }
+
+    .btn.danger {
+      border-color: #6b313a;
+      color: #e89ba4;
+    }
+
+    .btn.danger:hover:not(:disabled) {
+      background: rgba(168, 75, 86, 0.22);
+      border-color: var(--red);
+    }
+
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+    /* Lobby de 6 Slots de Vidas */
+    .lobby-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      padding: 12px 14px;
+      background: #111019;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      margin-bottom: 16px;
+    }
+
+    .api-config-box {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+      padding: 10px 12px;
+      background: #100f17;
+      border: 1px dashed #463f57;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+
+    .lobby-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(295px, 1fr));
+      gap: 14px;
+    }
+
+    .slot-card {
+      background: #111019;
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      transition: border-color 0.18s ease, transform 0.15s ease;
+    }
+
+    .slot-card:hover { border-color: var(--gold); }
+
+    .slot-card.empty-slot {
+      border-style: dashed;
+      justify-content: center;
+      align-items: center;
+      min-height: 195px;
+      text-align: center;
+      background: rgba(17, 16, 25, 0.55);
+    }
+
+    .slot-top { display: flex; gap: 12px; align-items: center; }
+
+    .slot-avatar {
+      width: 64px;
+      height: 76px;
+      border-radius: 11px;
+      border: 1px solid var(--gold);
+      background: #1b1826;
+      overflow: hidden;
+      flex-shrink: 0;
+      display: grid;
+      place-items: center;
+    }
+
+    .slot-avatar img, .slot-avatar svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .slot-info { min-width: 0; flex: 1; }
+
+    .slot-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .slot-num {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--gold);
+      font-weight: 700;
+    }
+
+    .slot-name {
+      font: 700 16px Georgia, serif;
+      color: var(--text);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .slot-meta { font-size: 12px; color: var(--muted); }
+
+    .slot-scene {
+      font-size: 11.5px;
+      color: #d6cfdf;
+      background: #171522;
+      border-radius: 8px;
+      padding: 7px 9px;
+      border: 1px solid rgba(57, 51, 71, 0.6);
+    }
+
+    .slot-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: auto;
+    }
+
+    /* Barra de Narração & Contexto de Cena */
+    .story-toolbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+      padding-bottom: 10px;
+      border-bottom: 1px solid rgba(57, 51, 71, 0.65);
+    }
+
+    .scene-location {
+      font-size: 12.5px;
+      color: var(--gold);
+      font-weight: 600;
+    }
+
+    .tts-status { font-size: 12px; color: var(--muted); }
+    .tts-status.speaking { color: var(--gold); font-weight: 600; }
+
+    /* Combate Tático */
+    .combat-banner {
+      background: linear-gradient(135deg, rgba(145, 42, 54, 0.28), rgba(24, 18, 28, 0.92));
+      border: 1px solid #9e434f;
+      border-radius: 12px;
+      padding: 12px 14px;
+      margin-bottom: 14px;
+    }
+
+    .combat-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 8px;
+    }
+
+    .combat-badge {
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 1.2px;
+      text-transform: uppercase;
+      color: #ffb3bc;
+      background: rgba(168, 52, 66, 0.45);
+      border: 1px solid #c45462;
+      padding: 2px 9px;
+      border-radius: 6px;
+    }
+
+    .combat-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(175px, 1fr));
+      gap: 8px;
+      font-size: 12.5px;
+    }
+
+    .combat-card {
+      background: rgba(13, 12, 19, 0.72);
+      border: 1px solid rgba(196, 84, 98, 0.4);
+      border-radius: 9px;
+      padding: 8px 10px;
+    }
+
+    /* Pessoas Presentes na Cena */
+    .present-bar {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+      padding: 10px 12px;
+      background: #111019;
+      border: 1px solid rgba(57, 51, 71, 0.85);
+      border-radius: 11px;
+      margin-bottom: 14px;
+    }
+
+    .present-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.2px;
+      color: var(--gold);
+      font-weight: 700;
+      margin-right: 4px;
+    }
+
+    .npc-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 11px;
+      border-radius: 20px;
+      border: 1px solid #4c4361;
+      background: #1d1a29;
+      color: #f0eadc;
+      font-size: 12px;
+    }
+
+    .npc-chip:hover {
+      border-color: var(--gold);
+      background: rgba(216, 182, 106, 0.16);
+      color: var(--gold);
+    }
+
+    .npc-chip .mood-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--gold);
+    }
+
+    /* Veredito da Realidade */
+    .verdict-bar {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 10px 13px;
+      border-radius: 10px;
+      margin-bottom: 14px;
+      font-size: 12.5px;
+      border: 1px solid var(--line);
+      background: #12101a;
+    }
+
+    .verdict-bar.BLOQUEADO {
+      border-color: #7c3540;
+      background: rgba(168, 75, 86, 0.16);
+      color: #f4b8bf;
+    }
+
+    .verdict-bar.FRACASSO {
+      border-color: #8a5632;
+      background: rgba(217, 155, 78, 0.14);
+      color: #f2d2a7;
+    }
+
+    .verdict-bar.SUCESSO_PARCIAL {
+      border-color: #555b7a;
+      background: rgba(125, 138, 196, 0.14);
+      color: #d5dcf7;
+    }
+
+    .verdict-bar.SUCESSO_COERENTE {
+      border-color: #416b59;
+      background: rgba(108, 165, 139, 0.14);
+      color: #bfe3d2;
+    }
+
+    .verdict-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .verdict-badge {
+      font-size: 10.5px;
+      font-weight: 800;
+      letter-spacing: 1px;
+      padding: 2px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid currentColor;
+    }
+
+    .verdict-title { font-weight: 700; }
+
+    /* Texto da História */
+    .story {
+      min-height: 185px;
+      white-space: pre-wrap;
+      color: #ece6dc;
+      font-size: 15.5px;
+      line-height: 1.75;
+      margin-bottom: 16px;
+      padding: 4px 2px;
+    }
+
+    .story .dialogue-quote {
+      color: #f7e3b2;
+      font-weight: 500;
+    }
+
+    .story-meta {
+      padding: 10px 13px;
+      border-radius: 10px;
+      background: #111019;
+      border: 1px solid rgba(57, 51, 71, 0.8);
+      font-size: 12.5px;
+      color: var(--muted);
+      margin-bottom: 14px;
+    }
+
+    /* Sugestões Rápidas */
+    .suggestions-box { margin-bottom: 12px; }
+
+    .suggestions-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.3px;
+      color: var(--muted);
+      margin-bottom: 7px;
+      font-weight: 600;
+    }
+
+    .suggestions-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .suggestion-btn {
+      text-align: left;
+      background: #12101a;
+      border: 1px solid #352f44;
+      color: #e4deee;
+      padding: 9px 12px;
+      border-radius: 10px;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .suggestion-btn:hover:not(:disabled) {
+      border-color: var(--gold);
+      background: rgba(216, 182, 106, 0.1);
+      color: #fff;
+    }
+
+    .suggestion-btn span.tag {
+      color: var(--gold);
+      font-weight: 700;
+      font-size: 11px;
+      text-transform: uppercase;
+      margin-right: 6px;
+    }
+
+    /* Passagem de Tempo */
+    .time-controls {
+      margin-top: 14px;
+      padding-top: 12px;
+      border-top: 1px dashed rgba(57, 51, 71, 0.8);
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .time-label { font-size: 11.5px; color: var(--muted); margin-right: 4px; }
+
+    /* Mensagens inline */
+    .msg-box {
+      padding: 10px 13px;
+      border-radius: 10px;
+      font-size: 13px;
+      margin-top: 12px;
+      border: 1px solid #69552f;
+      background: rgba(58, 46, 27, 0.45);
+      color: #e6cf9c;
+    }
+
+    .msg-box.error {
+      border-color: #7c3540;
+      background: rgba(82, 29, 37, 0.5);
+      color: #f4b8bf;
+    }
+
+    /* Retrato do Personagem */
+    .portrait-card {
+      display: flex;
+      gap: 13px;
+      align-items: center;
+      background: #100f17;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 11px;
+      margin-bottom: 12px;
+    }
+
+    .portrait-frame {
+      width: 104px;
+      height: 124px;
+      border-radius: 11px;
+      border: 1px solid var(--gold);
+      background: linear-gradient(145deg, #241e33, #110f19);
+      overflow: hidden;
+      flex-shrink: 0;
+      position: relative;
+      display: grid;
+      place-items: center;
+      box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+    }
+
+    .portrait-frame img, .portrait-frame svg {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .portrait-details { flex: 1; min-width: 0; }
+    .portrait-outfit { font-size: 12px; color: #d8d1e3; margin: 4px 0 8px; }
+
+    /* Barra de Mana (MP) */
+    .mana-box {
+      background: #100f17;
+      border: 1px solid #354766;
+      border-radius: 11px;
+      padding: 10px 12px;
+      margin-bottom: 10px;
+    }
+
+    .mana-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      font-size: 12px;
+      margin-bottom: 6px;
+    }
+
+    .mana-head strong { color: #8cc2ff; font-size: 14px; }
+
+    .bar-track {
+      width: 100%;
+      height: 8px;
+      background: #1a1826;
+      border-radius: 99px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 99px;
+      transition: width 0.3s ease;
+    }
+
+    .bar-fill.mp { background: linear-gradient(90deg, #3b7dd8, #7cc0ff); }
+    .bar-fill.mp.low { background: linear-gradient(90deg, #b84252, #e8846b); }
+    .bar-fill.mastery { background: linear-gradient(90deg, #a68238, #e8c776); }
+
+    /* Ficha de Atributos */
+    .stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 9px;
+      margin-bottom: 12px;
+    }
+
+    .stat {
+      background: #100f17;
+      border: 1px solid var(--line);
+      padding: 10px 12px;
+      border-radius: 11px;
+    }
+
+    .stat b {
+      display: block;
+      color: var(--gold);
+      font-size: 18px;
+      line-height: 1.25;
+    }
+
+    .stat b.danger-val { color: var(--red); }
+
+    .stat b.transcendent-val {
+      color: #ffe8a3;
+      text-shadow: 0 0 16px rgba(216, 182, 106, 0.65);
+    }
+
+    .stat b small.bonus-cap {
+      font-size: 13px;
+      color: #d7c3ff;
+      font-weight: 800;
+    }
+
+    .stat span {
+      color: var(--muted);
+      font-size: 10.5px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .sub-block {
+      margin-top: 13px;
+      padding-top: 11px;
+      border-top: 1px solid rgba(57, 51, 71, 0.65);
+    }
+
+    .sub-title {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      color: var(--gold);
+      margin-bottom: 7px;
+      font-weight: 600;
+    }
+
+    .pill {
+      display: inline-block;
+      border: 1px solid var(--line);
+      background: #12101a;
+      border-radius: 20px;
+      padding: 4px 10px;
+      color: #d9d3e3;
+      font-size: 11.5px;
+      margin: 2px 3px 2px 0;
+    }
+
+    .pill.knowledge {
+      border-color: #45596e;
+      color: #bad3ed;
+      background: rgba(31, 45, 61, 0.45);
+    }
+
+    /* Habilidades, Inventário, Vínculos e Diário */
+    .skill-list, .inv-list, .npc-list, .log {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 270px;
+      overflow-y: auto;
+      padding-right: 4px;
+    }
+
+    .skill-item, .inv-item, .npc-card {
+      background: #100f17;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 9px 11px;
+      font-size: 12.5px;
+    }
+
+    .skill-top, .inv-top, .npc-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .mp-tag {
+      font-size: 11px;
+      font-weight: 700;
+      color: #8cc2ff;
+      background: rgba(59, 125, 216, 0.18);
+      border: 1px solid #3c659c;
+      padding: 1px 7px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+
+    .rank-tag { font-size: 10.5px; color: var(--gold); font-weight: 600; }
+    .inv-actions, .npc-actions { display: flex; gap: 6px; margin-top: 6px; justify-content: flex-end; }
+
+    .affinity-badge {
+      font-size: 10.5px;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 12px;
+      border: 1px solid var(--line);
+    }
+
+    .affinity-badge.ally { color: #8fd4b4; border-color: #3f6e59; background: rgba(45, 82, 66, 0.35); }
+    .affinity-badge.friendly { color: #a9cbe8; border-color: #466480; background: rgba(44, 66, 87, 0.35); }
+    .affinity-badge.neutral { color: #c7c0d4; border-color: #4b4559; }
+    .affinity-badge.wary { color: #e8bd84; border-color: #785830; background: rgba(84, 60, 29, 0.35); }
+    .affinity-badge.hostile { color: #f09aa4; border-color: #7c3540; background: rgba(87, 32, 40, 0.4); }
+
+    .npc-meta { font-size: 11px; color: var(--gold); margin-bottom: 4px; }
+
+    .entry {
+      border-left: 2px solid var(--gold);
+      padding: 3px 0 3px 11px;
+      font-size: 12.5px;
+    }
+
+    .entry small {
+      display: block;
+      color: var(--gold);
+      font-size: 11px;
+      margin-bottom: 2px;
+    }
+
+    .timeline-box {
+      font-size: 13px;
+      color: #d6cfdf;
+      background: #100f17;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 11px 12px;
+    }
+
+    .butterfly-note {
+      margin-top: 9px;
+      padding-top: 8px;
+      border-top: 1px dashed var(--line);
+      font-size: 12px;
+      color: #cbb8f5;
+    }
+
+    /* Modais */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(6, 5, 10, 0.82);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      z-index: 50;
+    }
+
+    .modal-card {
+      background: var(--panel);
+      border: 1px solid var(--gold);
+      border-radius: 16px;
+      max-width: 820px;
+      width: 100%;
+      max-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.7);
+    }
+
+    .modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-header h3 { font: 20px Georgia, serif; margin: 0; color: var(--gold); }
+
+    .modal-body {
+      padding: 18px 20px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .archive-item {
+      background: #100f17;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 14px;
+    }
+
+    .archive-item-head {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--gold);
+      margin-bottom: 6px;
+      font-weight: 700;
+    }
+
+    .archive-action {
+      font-size: 12.5px;
+      color: #b9b1c7;
+      font-style: italic;
+      margin-bottom: 8px;
+      padding-left: 9px;
+      border-left: 2px solid #524966;
+    }
+
+    .archive-text {
+      white-space: pre-wrap;
+      font-size: 14px;
+      color: #ece6dc;
+      line-height: 1.65;
+    }
+
+    .thinking {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--gold);
+      font-size: 13px;
+      padding: 8px 0;
+    }
+
+    .spinner {
+      width: 15px;
+      height: 15px;
+      border: 2px solid rgba(216, 182, 106, 0.25);
+      border-top-color: var(--gold);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hidden { display: none !important; }
+
+    .footer {
+      text-align: center;
+      color: #777181;
+      font-size: 11.5px;
+      margin-top: 24px;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+      .hero h2 { font-size: 24px; }
+    }
+
+    @media (max-width: 540px) {
+      .formgrid { grid-template-columns: 1fr; }
+      .field.full { grid-column: auto; }
+      .shell { padding: 14px 12px 44px; }
+      .hero, .panel { padding: 15px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <!-- Cabeçalho -->
+    <header>
+      <div class="brand">
+        <div class="sigil">♜</div>
+        <div>
+          <h1>GRIMÓRIO</h1>
+          <small>Simulador de Vida &amp; RP · Black Clover</small>
+        </div>
+      </div>
+      <div class="header-controls">
+        <span class="status-badge" id="aiStatus">● IA Generativa Pronta</span>
+        <button type="button" class="btn subtle tts-toggle" id="autoTtsBtn" title="Ativar ou desativar narração automática por voz">🔇 Voz Auto: OFF</button>
+        <button type="button" class="btn subtle hidden" id="lobbyBtn" title="Voltar ao Lobby de Slots de Vidas">🗂️ Slots de Vidas</button>
+        <button type="button" class="btn subtle hidden" id="historyModalBtn" title="Reler todas as cenas anteriores">📜 Crônicas</button>
+        <button type="button" class="btn subtle" id="exportBtn" title="Baixar arquivo JSON da jornada">Exportar Backup (.json)</button>
+        <button type="button" class="btn subtle" id="importBtn" title="Carregar arquivo JSON">Importar Save (.json)</button>
+        <input type="file" id="importFile" accept=".json" class="hidden">
+        <button type="button" class="btn subtle danger hidden" id="resetBtn" title="Voltar aos slots">Sair da Vida</button>
+      </div>
+    </header>
+
+    <!-- Apresentação -->
+    <section class="hero">
+      <div class="eyebrow">Uma vida. Um destino. Infinitas consequências.</div>
+      <h2>O mundo não vai esperar por você.</h2>
+      <p>Viva cena a cena no Reino Clover em tempo real: gerencie até 6 slots de vidas com backup duplo (IndexedDB + localStorage + arquivo JSON), acompanhe o retrato dinâmico do seu personagem evoluir com idade e vestes, domine feitiços com gasto real de MP e sobreviva sem armadura de roteiro.</p>
+    </section>
+
+    <div class="grid">
+      <!-- Coluna Principal -->
+      <main>
+        <!-- Lobby de 6 Slots de Vidas -->
+        <section class="panel" id="lobbyPanel">
+          <div class="section-head">
+            <h3>Lobby · Slots de Vidas Persistentes</h3>
+            <span class="pill" id="dbStatusPill">Backup Duplo Ativo · 6 Slots</span>
+          </div>
+
+          <div class="lobby-toolbar">
+            <div style="font-size:13px;color:var(--muted);max-width:620px;">
+              Todas as vidas são salvas automaticamente no <strong>IndexedDB</strong> e espelhadas no <strong>localStorage</strong>. Para hospedagem externa (GitHub Pages/Vercel) ou segurança absoluta entre navegadores, use <strong>Exportar Backup (.json)</strong>.
+            </div>
+            <div style="display:flex;gap:7px;flex-wrap:wrap;">
+              <button type="button" class="btn subtle" id="lobbyImportBtn">📥 Importar Save (.json)</button>
+              <button type="button" class="btn subtle" id="toggleApiKeyBtn">🔑 Chave API Gemini (Opcional)</button>
+            </div>
+          </div>
+
+          <!-- Configuração Opcional de Chave API Gemini para Hospedagem Standalone -->
+          <div id="apiKeyConfigBox" class="api-config-box hidden">
+            <span style="color:var(--gold);font-weight:700;">Chave API Gemini:</span>
+            <input id="customApiKeyInput" type="password" placeholder="Cole sua chave AIza... se estiver hospedando fora deste ambiente" style="max-width:340px;padding:6px 10px;">
+            <button type="button" class="btn primary" id="saveApiKeyBtn" style="padding:6px 12px;">Salvar Chave</button>
+            <button type="button" class="btn subtle" id="clearApiKeyBtn">Limpar</button>
+            <span id="apiKeyStatusText" class="muted"></span>
+          </div>
+
+          <div class="lobby-grid" id="slotsGrid" style="margin-top:14px;"></div>
+          <div id="lobbyMsg" class="msg-box hidden"></div>
+        </section>
+
+        <!-- Etapa 1: Criação de Personagem -->
+        <section class="panel hidden" id="creation">
+          <div class="section-head">
+            <h3 id="creationHeader">Crie seu personagem</h3>
+            <button type="button" class="btn subtle" id="backToLobbyFromCreateBtn">← Voltar aos Slots</button>
+          </div>
+
+          <div class="formgrid">
+            <div class="field">
+              <label for="name">Nome</label>
+              <input id="name" placeholder="Ex.: Kaelen Vance">
+            </div>
+            <div class="field">
+              <label for="magic">Atributo mágico</label>
+              <input id="magic" placeholder="Ex.: Magia de Vidro, Cinzas, Som, Espinhos...">
+            </div>
+            <div class="field full">
+              <label for="appearance">Aparência física e vestimenta inicial (ex.: cabelo branco, olhos vermelhos, cicatriz no rosto, pele clara/morena)</label>
+              <input id="appearance" placeholder="Cabelos, olhos, tom de pele, cicatrizes, porte físico e roupas iniciais...">
+            </div>
+            <div class="field full">
+              <label for="personality">Personalidade, medos e motivações</label>
+              <textarea id="personality" placeholder="Como seu personagem pensa? O que deseja alcançar? O que teme perder?"></textarea>
+            </div>
+            <div class="field">
+              <label for="birth">Período de nascimento</label>
+              <select id="birth">
+                <option value="random">Aleatório · Deixe a realidade decidir</option>
+                <option value="before">Anos antes de Asta e Yuno (980–995)</option>
+                <option value="same">Contemporâneo a Asta e Yuno (Ano 1000)</option>
+                <option value="after">Depois da geração de Asta e Yuno (1010–1025)</option>
+              </select>
+            </div>
+            <div class="field">
+              <label for="difficulty">Rigor da simulação</label>
+              <select id="difficulty">
+                <option value="realista">Implacável · Consequências severas, sem armadura de roteiro</option>
+                <option value="dramatico">Dramático · Equilíbrio narrativo e tensão heroica</option>
+                <option value="cronica_sombria">Crônica Sombria · Dramático &amp; Rústico (peso cinematográfico + realismo brutal)</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button type="button" class="btn primary" id="createBtn">Sortear nascimento e começar</button>
+          </div>
+          <div id="creationMsg" class="msg-box hidden"></div>
+        </section>
+
+        <!-- Etapa 2: Simulação Narrativa RP Ativa -->
+        <section class="panel hidden" id="game">
+          <div class="section-head">
+            <h3 id="sceneTitle">Prólogo</h3>
+            <span class="pill" id="dateTag">Ano desconhecido</span>
+          </div>
+
+          <!-- Localização Atual & Barra de Narração -->
+          <div class="story-toolbar">
+            <span class="scene-location" id="locationTag">📍 Local desconhecido</span>
+            <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+              <span class="tts-status" id="ttsStatusText">🎙️ Voz pronta</span>
+              <button type="button" class="btn subtle" id="speakSceneBtn">▶ Ouvir cena</button>
+              <button type="button" class="btn subtle hidden" id="stopSpeechBtn">■ Parar</button>
+            </div>
+          </div>
+
+          <!-- Painel de Combate Tático -->
+          <div class="combat-banner hidden" id="combatPanel">
+            <div class="combat-head">
+              <span class="combat-badge">⚔️ COMBATE TÁTICO EM CURSO</span>
+              <span class="muted" id="combatTacticalInfo" style="font-size:12px;">Distância média · Postura Neutra</span>
+            </div>
+            <div class="combat-grid" id="combatGrid"></div>
+          </div>
+
+          <!-- Pessoas Presentes na Cena -->
+          <div class="present-bar" id="presentBar">
+            <span class="present-label">👥 Presentes na cena:</span>
+            <div id="presentNpcsList" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+          </div>
+
+          <!-- Veredito da Realidade & Bloqueio Epistêmico -->
+          <div id="realityVerdict" class="verdict-bar hidden"></div>
+
+          <!-- Texto da Cena e Diálogos -->
+          <div class="story" id="storyText">Sua história começa...</div>
+
+          <!-- Resumo de Consequências do Turno -->
+          <div class="story-meta hidden" id="turnFeedback"></div>
+
+          <!-- Indicador de Carregamento -->
+          <div id="thinkingIndicator" class="thinking hidden">
+            <div class="spinner"></div>
+            <span>O mundo, os inimigos e os personagens ao redor estão reagindo...</span>
+          </div>
+
+          <!-- Entrada de RP Livre + Sugestões Rápidas -->
+          <div id="actionControls">
+            <div class="suggestions-box" id="suggestionsBox">
+              <div class="suggestions-label">⚡ Sugestões rápidas da cena (ou escreva livremente abaixo):</div>
+              <div class="suggestions-grid" id="suggestionsList"></div>
+            </div>
+
+            <div class="field">
+              <label for="playerAction">Sua ação, postura tática ou fala direta (use aspas para falar):</label>
+              <textarea id="playerAction" placeholder='Ex.: Mantenho guarda defensiva e digo: "Não preciso lutar com você, mas não vou recuar."'></textarea>
+            </div>
+
+            <div class="actions">
+              <button type="button" class="btn primary" id="actBtn">Agir / Falar agora</button>
+              <button type="button" class="btn" id="saveBtn">Salvar agora</button>
+            </div>
+
+            <!-- Passagem de Tempo Explícita -->
+            <div class="time-controls">
+              <span class="time-label">⏳ Passar o tempo:</span>
+              <button type="button" class="btn time-btn" data-time="Dormir / Descansar (+1 Dia) para recuperar reserva de mana e resistência física">Dormir / Descansar (+1 Dia)</button>
+              <button type="button" class="btn time-btn" data-time="Treinar / Passar +1 Mês vivendo minha rotina, trabalhando e treinando dentro dos meus limites">Treinar / Passar +1 Mês</button>
+              <button type="button" class="btn time-btn" data-time="Avançar +1 Ano completo amadurecendo e acompanhando os rumos da minha vida">Avançar +1 Ano</button>
+            </div>
+          </div>
+
+          <!-- Botão pós-morte -->
+          <div id="deathControls" class="actions hidden">
+            <button type="button" class="btn primary" id="newLifeAfterDeathBtn">Voltar aos Slots de Vidas</button>
+          </div>
+
+          <div id="gameMsg" class="msg-box hidden"></div>
+        </section>
+      </main>
+
+      <!-- Barra Lateral: Retrato, Ficha, Grimório & Habilidades, Inventário, Elenco, Linha Temporal e Diário -->
+      <aside>
+        <!-- Ficha & Retrato Dinâmico do Personagem -->
+        <section class="panel">
+          <div class="section-head">
+            <h3>Ficha do personagem</h3>
+            <span class="pill" id="difficultyBadge">Rigor</span>
+          </div>
+          <div id="emptyState" class="muted">Selecione ou crie uma vida nos slots para visualizar a ficha.</div>
+          <div id="characterState" class="hidden">
+            <!-- Quadro de Retrato Visual Dinâmico -->
+            <div class="portrait-card">
+              <div class="portrait-frame" id="portraitFrame"></div>
+              <div class="portrait-details">
+                <strong id="portraitName" style="font-size:15px;color:var(--text);">Personagem</strong>
+                <div class="portrait-outfit" id="portraitOutfit">Vestimenta comum</div>
+                <div style="display:flex;gap:6px;flex-wrap:wrap;">
+                  <button type="button" class="btn subtle" id="editAppearanceBtn" title="Atualizar aparência ou vestimenta atual">✏️ Aparência/Vestes</button>
+                  <button type="button" class="btn subtle" id="uploadPortraitBtn" title="Enviar uma imagem personalizada do seu dispositivo">📷 Enviar Imagem</button>
+                  <input type="file" id="portraitFileInput" accept="image/*" class="hidden">
+                </div>
+              </div>
+            </div>
+
+            <!-- Reserva de Mana Organizada -->
+            <div class="mana-box">
+              <div class="mana-head">
+                <span>Reserva de Mana (MP)</span>
+                <strong id="manaNumbers">0 / 0 MP</strong>
+              </div>
+              <div class="bar-track">
+                <div class="bar-fill mp" id="manaBarFill" style="width:100%;"></div>
+              </div>
+              <div class="muted" id="manaEfficiencyNote" style="font-size:11px;margin-top:5px;">Potência Mágica: 0/100 · Eficiência padrão</div>
+            </div>
+
+            <div class="stats" id="stats"></div>
+            <p id="originLine" class="muted" style="font-size:13px;margin:6px 0 8px;"></p>
+            <div id="traits"></div>
+
+            <!-- Conhecimentos & Conceitos Dominados -->
+            <div class="sub-block">
+              <div class="sub-title">Conhecimentos &amp; Conceitos Dominados</div>
+              <div id="knowledgeList"></div>
+            </div>
+          </div>
+        </section>
+
+        <!-- Grimório & Habilidades com Nível de Domínio -->
+        <section class="panel hidden" id="skillsPanel">
+          <div class="section-head">
+            <h3 id="grimoireHeader">Grimório &amp; Habilidades</h3>
+            <span class="pill" id="skillsCount">0</span>
+          </div>
+          <div id="skillsList" class="skill-list muted" style="font-size:13px;">Nenhuma habilidade adquirida ainda.</div>
+        </section>
+
+        <!-- Inventário & Equipamentos -->
+        <section class="panel hidden" id="inventoryPanel">
+          <div class="section-head">
+            <h3>Inventário &amp; Equipamentos</h3>
+            <span class="pill" id="yulBadge">0 Yuls</span>
+          </div>
+          <div id="inventoryList" class="inv-list muted" style="font-size:13px;">Mochila vazia.</div>
+        </section>
+
+        <!-- Elenco & Vínculos -->
+        <section class="panel">
+          <div class="section-head">
+            <h3>Elenco &amp; Vínculos</h3>
+            <span class="pill" id="npcCount">0</span>
+          </div>
+          <div id="npcList" class="npc-list muted" style="font-size:13px;">Nenhum vínculo relevante formado ainda.</div>
+        </section>
+
+        <!-- O Mundo Continua (Linha Temporal Canônica) -->
+        <section class="panel">
+          <h3>O mundo continua</h3>
+          <div class="timeline-box">
+            <div id="worldState">A linha temporal canônica será definida quando sua jornada começar.</div>
+            <div id="butterflyState" class="butterfly-note hidden"></div>
+          </div>
+        </section>
+
+        <!-- Diário da Jornada -->
+        <section class="panel">
+          <div class="section-head">
+            <h3>Diário da jornada</h3>
+            <span class="pill" id="logCount">0</span>
+          </div>
+          <div id="journal" class="log muted" style="font-size:13px;">Nenhum acontecimento registrado.</div>
+        </section>
+      </aside>
+    </div>
+
+    <div class="footer">GRIMÓRIO · Simulador Narrativo de RP com IA · Standalone Pronto para GitHub Pages / Vercel · A obra Black Clover pertence aos seus respectivos criadores.</div>
+  </div>
+
+  <!-- Modal de Edição de Aparência / Vestimenta -->
+  <div id="appearanceModal" class="modal-backdrop hidden">
+    <div class="modal-card" style="max-width:520px;">
+      <div class="modal-header">
+        <h3>✏️ Atualizar Aparência &amp; Vestimenta</h3>
+        <button type="button" class="btn subtle" id="closeAppearanceBtn">Fechar ✕</button>
+      </div>
+      <div class="modal-body">
+        <div class="field">
+          <label for="editAppearanceInput">Aparência física atual (cabelo, olhos, cicatrizes, porte)</label>
+          <input id="editAppearanceInput" placeholder="Ex.: Cabelos prateados longos, olhos dourados, cicatriz no rosto...">
+        </div>
+        <div class="field">
+          <label for="editOutfitInput">Vestimenta / Manto atual</label>
+          <input id="editOutfitInput" placeholder="Ex.: Túnica simples de aldeão, Manto dos Touros Negros, Armadura nobre...">
+        </div>
+        <div class="actions">
+          <button type="button" class="btn primary" id="saveAppearanceBtn">Aplicar ao Retrato</button>
+          <button type="button" class="btn subtle" id="resetCustomPhotoBtn">Usar Retrato Dinâmico SVG</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Crônicas (Histórico Completo) -->
+  <div id="historyModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3>📜 Crônicas da Vida — Histórico Completo</h3>
+        <button type="button" class="btn subtle" id="closeHistoryBtn">Fechar ✕</button>
+      </div>
+      <div class="modal-body" id="historyModalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const DEFAULT_ENV_API_KEY = ""; // Preenchido automaticamente no ambiente ou via Chave Opcional no Lobby
+    const GEMINI_MODEL = "gemini-2.5-flash";
+    const DB_NAME = "GrimorioLifeSimDB";
+    const DB_VERSION = 2;
+    const STORE_SLOTS = "lifeSlots";
+    const MIRROR_STORAGE_KEY = "grimorio-slots-mirror-v5";
+    const CUSTOM_API_KEY_STORAGE = "grimorio-custom-gemini-key";
+    const MAX_SLOTS = 6;
+
+    const $ = id => document.getElementById(id);
+    const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+    const rand = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+    const clamp = (val, min, max) => Math.max(min, Math.min(max, val));
+
+    let dbInstance = null;
+    let slotsCache = {};
+    let activeSlotId = null;
+    let game = null;
+    let isGenerating = false;
+    let autoNarrate = false;
+
+    function getActiveApiKey() {
+      const savedKey = localStorage.getItem(CUSTOM_API_KEY_STORAGE);
+      return (savedKey && savedKey.trim()) ? savedKey.trim() : DEFAULT_ENV_API_KEY;
+    }
+
+    // =========================================================================
+    // 1. PERSISTÊNCIA REDUNDANTE (INDEXEDDB + LOCALSTORAGE ESPELHO + JSON)
+    // =========================================================================
+    function openGrimorioDB() {
+      return new Promise((resolve) => {
+        if (!("indexedDB" in window)) {
+          $("dbStatusPill").textContent = "LocalStorage Ativo · 6 Slots";
+          resolve(null);
+          return;
+        }
+        try {
+          const req = indexedDB.open(DB_NAME, DB_VERSION);
+          req.onupgradeneeded = (e) => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains(STORE_SLOTS)) {
+              db.createObjectStore(STORE_SLOTS, { keyPath: "slotId" });
+            }
+          };
+          req.onsuccess = (e) => {
+            dbInstance = e.target.result;
+            $("dbStatusPill").textContent = "Backup Duplo (IndexedDB + Local) · 6 Slots";
+            resolve(dbInstance);
+          };
+          req.onerror = () => {
+            $("dbStatusPill").textContent = "Backup Local · 6 Slots";
+            resolve(null);
+          };
+        } catch (err) {
+          resolve(null);
+        }
+      });
+    }
+
+    async function loadAllSlotsFromDB() {
+      const merged = {};
+
+      if (dbInstance) {
+        try {
+          const idbRecords = await new Promise((resolve) => {
+            const tx = dbInstance.transaction(STORE_SLOTS, "readonly");
+            const req = tx.objectStore(STORE_SLOTS).getAll();
+            req.onsuccess = () => resolve(req.result || []);
+            req.onerror = () => resolve([]);
+          });
+          idbRecords.forEach(rec => {
+            if (rec && rec.slotId && rec.data) {
+              merged[rec.slotId] = migrateGameSchema(rec.data);
+            }
+          });
+        } catch (e) {}
+      }
+
+      try {
+        const rawMirror = localStorage.getItem(MIRROR_STORAGE_KEY);
+        if (rawMirror) {
+          const parsed = JSON.parse(rawMirror);
+          Object.keys(parsed || {}).forEach(k => {
+            if (parsed[k] && parsed[k].name) {
+              const idbUpdated = merged[k]?.updatedAt || 0;
+              const mirrorUpdated = parsed[k]?.updatedAt || 0;
+              if (!merged[k] || mirrorUpdated > idbUpdated) {
+                merged[k] = migrateGameSchema(parsed[k]);
+              }
+            }
+          });
+        }
+      } catch (e) {}
+
+      slotsCache = merged;
+      return merged;
+    }
+
+    async function persistSlotToDB(slotId, gameData) {
+      if (!slotId || !gameData) return;
+      gameData.updatedAt = Date.now();
+      slotsCache[slotId] = gameData;
+
+      if (dbInstance) {
+        try {
+          await new Promise((resolve) => {
+            const tx = dbInstance.transaction(STORE_SLOTS, "readwrite");
+            tx.objectStore(STORE_SLOTS).put({
+              slotId,
+              updatedAt: gameData.updatedAt,
+              data: gameData
+            });
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => resolve();
+          });
+        } catch (e) {}
+      }
+
+      try {
+        localStorage.setItem(MIRROR_STORAGE_KEY, JSON.stringify(slotsCache));
+      } catch (e) {
+        try {
+          const slim = {};
+          Object.keys(slotsCache).forEach(k => {
+            slim[k] = { ...slotsCache[k], customPortraitBase64: "" };
+          });
+          localStorage.setItem(MIRROR_STORAGE_KEY, JSON.stringify(slim));
+        } catch (_) {}
+      }
+    }
+
+    async function deleteSlotFromDB(slotId) {
+      delete slotsCache[slotId];
+      if (dbInstance) {
+        try {
+          await new Promise((resolve) => {
+            const tx = dbInstance.transaction(STORE_SLOTS, "readwrite");
+            tx.objectStore(STORE_SLOTS).delete(slotId);
+            tx.oncomplete = () => resolve();
+            tx.onerror = () => resolve();
+          });
+        } catch (e) {}
+      }
+      try {
+        localStorage.setItem(MIRROR_STORAGE_KEY, JSON.stringify(slotsCache));
+      } catch (e) {}
+    }
+
+    function migrateGameSchema(g) {
+      const power = Number(g.mana) || 25;
+      const maxMp = Number(g.maxMp) || Math.max(50, power * 10);
+      return {
+        ...g,
+        updatedAt: g.updatedAt || Date.now(),
+        outfit: g.outfit || "Roupas simples compatíveis com sua origem social",
+        customPortraitBase64: g.customPortraitBase64 || g.portraitUrl || "",
+        maxMp,
+        currentMp: g.currentMp !== undefined ? g.currentMp : maxMp,
+        combatExp: Number(g.combatExp) || 0,
+        skills: Array.isArray(g.skills) ? g.skills : [],
+        inventory: Array.isArray(g.inventory) ? g.inventory : [
+          { id: "inv_roupa", name: "Vestimenta Comum", type: "Vestimenta", equipped: true, qty: 1, desc: "Traje cotidiano da sua região." }
+        ],
+        yul: Number(g.yul) || 0,
+        combatState: g.combatState || { active: false, stance: "Neutra", distance: "Média", enemies: [] }
+      };
+    }
+
+    // =========================================================================
+    // 2. GERADOR VISUAL DINÂMICO DE RETRATO SVG (SEM URLS EXTERNAS)
+    // =========================================================================
+    function parseCharacterVisualTokens(charData) {
+      const text = `${charData.appearance || ""} ${charData.outfit || ""} ${charData.social || ""} ${charData.magic || ""}`.toLowerCase();
+
+      // Tom de pele
+      let skin = "#eab996", skinShade = "#cf9670";
+      if (/negra|negro|retinta|escura|escuro/.test(text)) { skin = "#6e4733"; skinShade = "#523222"; }
+      else if (/morena|moreno|bronzead|parda|pardo|trigueir/.test(text)) { skin = "#b87e58"; skinShade = "#96613f"; }
+      else if (/pálid|palid|branc|albin/.test(text)) { skin = "#f5d7c6"; skinShade = "#d9b49e"; }
+
+      // Cor do cabelo
+      let hair = "#24202e", hairHighlight = "#3b354a";
+      if (/branc|pratead|platin|grisalh/.test(text) || charData.age >= 60) { hair = "#e5e3ec"; hairHighlight = "#ffffff"; }
+      else if (/loiro|loira|dourad|amarel/.test(text)) { hair = "#e0b44c"; hairHighlight = "#f7d67c"; }
+      else if (/ruiv|vermelh|carmesim|fogo/.test(text)) { hair = "#a8323c"; hairHighlight = "#d64b56"; }
+      else if (/azul|ciano/.test(text)) { hair = "#2c5aa0"; hairHighlight = "#4d82d4"; }
+      else if (/verde|esmerald/.test(text)) { hair = "#2a6e4d"; hairHighlight = "#429c70"; }
+      else if (/roxo|violeta|lilás/.test(text)) { hair = "#5c3985"; hairHighlight = "#8357b5"; }
+      else if (/castanh|marrom/.test(text)) { hair = "#593b28"; hairHighlight = "#7a533b"; }
+
+      // Estilo de cabelo
+      const isLongHair = /longo|longos|comprid|trança|rabo de cavalo|solto/.test(text);
+      const isSpikyHair = /espetad|rebelde|curto|bagunçad/.test(text);
+
+      // Cor dos olhos
+      let eyes = "#d8b66a";
+      if (/olhos vermelhos|olho vermelho|carmesim|rubi/.test(text)) eyes = "#e04856";
+      else if (/olhos azuis|olho azul|safira|ciano/.test(text)) eyes = "#4da6ff";
+      else if (/olhos verdes|olho verde|esmeralda/.test(text)) eyes = "#49c985";
+      else if (/olhos roxos|olho roxo|violeta/.test(text)) eyes = "#a675f5";
+      else if (/olhos castanhos|olho castanho/.test(text)) eyes = "#8c583a";
+      else if (/olhos pretos|olho preto|negros/.test(text)) eyes = "#26232e";
+
+      // Aura Mágica
+      const mText = (charData.magic || "").toLowerCase();
+      let aura1 = "#d8b66a", aura2 = "#7e57c2";
+      if (/fogo|chama|lava|sol|explos/.test(mText)) { aura1 = "#ff6b3d"; aura2 = "#ffb74d"; }
+      else if (/água|agua|gelo|névoa|nevoa|chuva|mercúrio/.test(mText)) { aura1 = "#4fc3f7"; aura2 = "#0288d1"; }
+      else if (/vento|ar|relâmpago|raio|trovão/.test(mText)) { aura1 = "#69f0ae"; aura2 = "#00bfa5"; }
+      else if (/terra|pedra|cristal|vidro|metal|aço|ferro/.test(mText)) { aura1 = "#b0bec5"; aura2 = "#78909c"; }
+      else if (/trevas|sombra|escuridão|cinza|maldiç/.test(mText)) { aura1 = "#9575cd"; aura2 = "#311b92"; }
+      else if (/luz|estrela|espacial|tempo/.test(mText)) { aura1 = "#fff176"; aura2 = "#ffd54f"; }
+      else if (/planta|espinho|madeira|flor/.test(mText)) { aura1 = "#81c784"; aura2 = "#388e3c"; }
+
+      // Vestimenta / Esquadrão
+      let tunic = "#2b2838", trim = "#7a728a", cloak = "";
+      if (/touros negros/.test(text)) { tunic = "#18171f"; trim = "#d8b66a"; cloak = "#14131a"; }
+      else if (/alvorecer dourado/.test(text)) { tunic = "#1e2a4a"; trim = "#f0c75e"; cloak = "#25355e"; }
+      else if (/águias de prata|aguias de prata/.test(text)) { tunic = "#dfe4ed"; trim = "#8fa3bf"; cloak = "#eef2f7"; }
+      else if (/leões carmesim|leoes carmesim/.test(text)) { tunic = "#7a1f28"; trim = "#e0b44c"; cloak = "#8f242f"; }
+      else if (/nobre|realeza|cavaleiro|manto|capa/.test(text)) { tunic = "#252942"; trim = "#d8b66a"; cloak = "#1d2136"; }
+      else if (/plebe|aldeão|humilde|farrapo|órfão/.test(text)) { tunic = "#4a3f35"; trim = "#786858"; cloak = ""; }
+
+      const hasScar = /cicatriz|marca|tatuagem|queimadura/.test(text);
+      const hasGrimoire = Boolean(charData.grimoire);
+      const age = Number(charData.age) || 0;
+
+      return { skin, skinShade, hair, hairHighlight, eyes, aura1, aura2, tunic, trim, cloak, isLongHair, isSpikyHair, hasScar, hasGrimoire, age };
+    }
+
+    function generateDynamicPortraitSVG(charData) {
+      const v = parseCharacterVisualTokens(charData);
+      const uid = `p_${Math.random().toString(36).slice(2, 7)}`;
+
+      // Proporções por faixa etária
+      const isChild = v.age < 13;
+      const isTeen = v.age >= 13 && v.age < 19;
+      const isElder = v.age >= 55;
+
+      const headScale = isChild ? "translate(100,118) scale(0.92)" : isTeen ? "translate(100,112) scale(0.97)" : "translate(100,108) scale(1)";
+      const shoulderW = isChild ? 54 : isTeen ? 68 : 78;
+      const eyeSize = isChild ? 6.2 : 5.0;
+
+      const backHairPath = v.isLongHair
+        ? `<path d="M52,95 Q42,155 48,215 L152,215 Q158,155 148,95 Z" fill="${v.hair}" />`
+        : `<path d="M56,95 Q52,132 62,148 L138,148 Q148,132 144,95 Z" fill="${v.hair}" />`;
+
+      const frontHairPath = v.isSpikyHair
+        ? `<path d="M54,96 L46,72 L65,80 L74,52 L92,72 L104,48 L116,72 L134,54 L138,80 L154,74 L145,98 Q125,84 100,88 Q75,84 54,96 Z" fill="${v.hair}" />`
+        : `<path d="M54,102 Q54,54 100,52 Q146,54 146,102 Q132,82 112,92 L100,78 L88,92 Q68,82 54,102 Z" fill="${v.hair}" />`;
+
+      const cloakSvg = v.cloak
+        ? `<path d="M${100 - shoulderW - 6},162 Q100,148 ${100 + shoulderW + 6},162 L${100 + shoulderW + 14},240 L${100 - shoulderW - 14},240 Z" fill="${v.cloak}" stroke="${v.trim}" stroke-width="2" />`
+        : "";
+
+      const scarSvg = v.hasScar
+        ? `<path d="M114,104 L126,118 M117,108 L122,106 M120,113 L125,111" stroke="#9e434f" stroke-width="1.8" stroke-linecap="round" />`
+        : "";
+
+      const elderLines = isElder
+        ? `<path d="M76,118 Q79,124 76,129 M124,118 Q121,124 124,129 M90,136 Q100,134 110,136" stroke="${v.skinShade}" stroke-width="1.3" fill="none" />`
+        : "";
+
+      const grimoireSvg = v.hasGrimoire
+        ? `<g transform="translate(142,168) rotate(-10)">
+             <rect x="0" y="0" width="32" height="42" rx="3" fill="#1b1626" stroke="#d8b66a" stroke-width="1.8" />
+             <circle cx="16" cy="21" r="7" fill="none" stroke="#d8b66a" stroke-width="1.2" />
+             <path d="M16,16 L16,26 M11,21 L21,21" stroke="#d8b66a" stroke-width="1.2" />
+           </g>`
+        : "";
+
+      return `<svg viewBox="0 0 200 240" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <radialGradient id="bg_${uid}" cx="50%" cy="35%" r="70%">
+            <stop offset="0%" stop-color="${v.aura1}" stop-opacity="0.34" />
+            <stop offset="55%" stop-color="${v.aura2}" stop-opacity="0.16" />
+            <stop offset="100%" stop-color="#0d0c13" stop-opacity="1" />
+          </radialGradient>
+          <linearGradient id="auraRing_${uid}" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="${v.aura1}" stop-opacity="0.7" />
+            <stop offset="100%" stop-color="${v.aura2}" stop-opacity="0.15" />
+          </linearGradient>
+        </defs>
+        <rect width="200" height="240" fill="#0f0e17" />
+        <rect width="200" height="240" fill="url(#bg_${uid})" />
+        <circle cx="100" cy="108" r="76" fill="none" stroke="url(#auraRing_${uid})" stroke-width="1.5" stroke-dasharray="6 4" />
+        <circle cx="100" cy="108" r="62" fill="none" stroke="${v.aura1}" stroke-opacity="0.25" stroke-width="1" />
+        ${backHairPath}
+        ${cloakSvg}
+        <!-- Tronco & Vestimenta -->
+        <path d="M${100 - shoulderW},240 L${100 - shoulderW + 8},168 Q100,152 ${100 + shoulderW - 8},168 L${100 + shoulderW},240 Z" fill="${v.tunic}" stroke="${v.trim}" stroke-width="1.6" />
+        <path d="M84,160 L100,186 L116,160" fill="none" stroke="${v.trim}" stroke-width="2" />
+        <!-- Pescoço -->
+        <rect x="89" y="136" width="22" height="28" rx="6" fill="${v.skinShade}" />
+        <!-- Cabeça -->
+        <g transform="${headScale} translate(-100,-108)">
+          <path d="M64,92 Q64,142 100,148 Q136,142 136,92 Q136,62 100,62 Q64,62 64,92 Z" fill="${v.skin}" />
+          <!-- Sombras faciais -->
+          <path d="M66,105 Q72,138 100,146 Q92,136 74,112 Z" fill="${v.skinShade}" opacity="0.35" />
+          <!-- Sobrancelhas -->
+          <path d="M74,97 Q84,93 92,98" stroke="${v.hair}" stroke-width="2.4" fill="none" stroke-linecap="round" />
+          <path d="M126,97 Q116,93 108,98" stroke="${v.hair}" stroke-width="2.4" fill="none" stroke-linecap="round" />
+          <!-- Olhos -->
+          <ellipse cx="83" cy="106" rx="7.2" ry="${eyeSize}" fill="#f7f5f0" />
+          <circle cx="83" cy="106" r="${eyeSize - 1.1}" fill="${v.eyes}" />
+          <circle cx="83" cy="106" r="2" fill="#121017" />
+          <circle cx="81" cy="104" r="1.3" fill="#ffffff" />
+          <ellipse cx="117" cy="106" rx="7.2" ry="${eyeSize}" fill="#f7f5f0" />
+          <circle cx="117" cy="106" r="${eyeSize - 1.1}" fill="${v.eyes}" />
+          <circle cx="117" cy="106" r="2" fill="#121017" />
+          <circle cx="115" cy="104" r="1.3" fill="#ffffff" />
+          <!-- Nariz e Boca -->
+          <path d="M100,108 L98,120 L102,121" stroke="${v.skinShade}" stroke-width="1.6" fill="none" stroke-linecap="round" />
+          <path d="M92,131 Q100,134 108,131" stroke="#8f544e" stroke-width="1.8" fill="none" stroke-linecap="round" />
+          ${scarSvg}
+          ${elderLines}
+          ${frontHairPath}
+        </g>
+        ${grimoireSvg}
+      </svg>`;
+    }
+
+    function getPortraitHtml(charData, isSmall = false) {
+      if (charData.customPortraitBase64) {
+        return `<img src="${charData.customPortraitBase64}" alt="${escapeHtml(charData.name)}">`;
+      }
+      return generateDynamicPortraitSVG(charData);
+    }
+
+    // =========================================================================
+    // UTILITÁRIOS DE FORMATAÇÃO
+    // =========================================================================
+    function escapeHtml(str) {
+      return String(str ?? "").replace(/[&<>"']/g, c => ({
+        "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+      }[c]));
+    }
+
+    function formatNarrativeHtml(rawText) {
+      const escaped = escapeHtml(rawText || "");
+      return escaped.replace(/(&quot;[^&]*?&quot;|“[^”]*?”)/g, '<span class="dialogue-quote">$1</span>');
+    }
+
+    function formatStatHtml(val) {
+      const n = Math.max(0, Math.round(Number(val) || 0));
+      if (n <= 100) return `${n}/100`;
+      return `100 <small class="bonus-cap">(+${n - 100})</small>`;
+    }
+
+    function formatStatPlain(val) {
+      const n = Math.max(0, Math.round(Number(val) || 0));
+      return n <= 100 ? `${n}/100` : `100 (+${n - 100})`;
+    }
+
+    function getMasteryRank(level) {
+      const lv = clamp(Number(level) || 1, 1, 10);
+      if (lv <= 2) return "Iniciante";
+      if (lv <= 5) return "Adepto";
+      if (lv <= 8) return "Mestre";
+      return "Transcendente";
+    }
+
+    function getAffinityMeta(score) {
+      const s = clamp(Number(score) || 0, -100, 100);
+      if (s <= -60) return { label: `Inimigo Mortal (${s})`, cls: "hostile" };
+      if (s <= -20) return { label: `Hostil (${s})`, cls: "hostile" };
+      if (s < 15) return { label: `Desconfiado / Neutro (${s})`, cls: s < 0 ? "wary" : "neutral" };
+      if (s < 55) return { label: `Amigável (+${s})`, cls: "friendly" };
+      return { label: `Aliado Fiel (+${s})`, cls: "ally" };
+    }
+
+    function showMsg(boxId, text, isError = false) {
+      const box = $(boxId);
+      if (!box) return;
+      if (!text) {
+        box.classList.add("hidden");
+        box.textContent = "";
+        return;
+      }
+      box.textContent = text;
+      box.classList.toggle("error", isError);
+      box.classList.remove("hidden");
+    }
+
+    function setBusy(busy) {
+      isGenerating = busy;
+      $("thinkingIndicator").classList.toggle("hidden", !busy);
+      $("actBtn").disabled = busy;
+      $("createBtn").disabled = busy;
+      document.querySelectorAll(".time-btn, .suggestion-btn").forEach(btn => {
+        btn.disabled = busy;
+      });
+      const badge = $("aiStatus");
+      if (game && game.status === "Morto") {
+        badge.textContent = "✝ Jornada Encerrada";
+        badge.className = "status-badge dead";
+      } else if (busy) {
+        badge.textContent = "⏳ Reagindo ao RP...";
+        badge.className = "status-badge busy";
+      } else {
+        badge.textContent = "● IA Generativa Pronta";
+        badge.className = "status-badge";
+      }
+    }
+
+    // =========================================================================
+    // CHAMADA RESILIENTE À API GEMINI
+    // =========================================================================
+    async function fetchWithBackoff(url, options, maxRetries = 4) {
+      let delay = 1000;
+      for (let attempt = 0; attempt <= maxRetries; attempt++) {
+        try {
+          const response = await fetch(url, options);
+          if (response.ok) return await response.json();
+          if ((response.status === 429 || response.status >= 500) && attempt < maxRetries) {
+            await new Promise(r => setTimeout(r, delay));
+            delay *= 2;
+            continue;
+          }
+          const errText = await response.text();
+          throw new Error(`HTTP ${response.status}: ${errText.slice(0, 180)}`);
+        } catch (err) {
+          if (attempt === maxRetries) throw err;
+          await new Promise(r => setTimeout(r, delay));
+          delay *= 2;
+        }
+      }
+    }
+
+    // =========================================================================
+    // SORTEIO REALISTA DE NASCIMENTO
+    // =========================================================================
+    function rollBirthReality(name, magic, appearance, personality, era, difficulty) {
+      const year =
+        era === "before" ? rand(980, 995) :
+        era === "same" ? 1000 :
+        era === "after" ? rand(1010, 1025) :
+        rand(982, 1022);
+
+      const roll = Math.random();
+      let social, origin, location, manaMin, manaMax, manaQuality, outfit, startYul, startInv;
+
+      if (roll < 0.45) {
+        social = "Plebeu da Região Esquecida";
+        origin = pick([
+          "Vilarejo agrícola de Hage",
+          "Aldeia isolada na Região Esquecida",
+          "Vilarejo fronteiriço de Saussy",
+          "Povoado humilde nas margens da Região Esquecida"
+        ]);
+        location = `Casa humilde em ${origin}`;
+        manaMin = 8;
+        manaMax = 36;
+        manaQuality = "Mana escassa e pouco densa (padrão plebeu)";
+        outfit = "Túnica simples de aldeão remendada e botas gastas";
+        startYul = rand(15, 65);
+        startInv = [
+          { id: "inv_1", name: "Túnica Simples de Aldeão", type: "Vestimenta", equipped: true, qty: 1, desc: "Roupa humilde e resistente da Região Esquecida." },
+          { id: "inv_2", name: "Cantil de Água Fresca", type: "Consumível", equipped: false, qty: 1, desc: "Alivia a sede e recupera leve fôlego." }
+        ];
+      } else if (roll < 0.76) {
+        social = "Camponês / Cidadão da Região Comum";
+        origin = pick([
+          "Cidade mercante de Kiten",
+          "Vila comercial de Nairn",
+          "Distrito artesanal da Região Comum",
+          "Cidade ribeirinha do Reino Clover"
+        ]);
+        location = `Residência familiar em ${origin}`;
+        manaMin = 28;
+        manaMax = 62;
+        manaQuality = "Mana mediana e estável";
+        outfit = "Traje cotidiano de tecido firme com cinto de couro";
+        startYul = rand(140, 380);
+        startInv = [
+          { id: "inv_1", name: "Traje Cidadão da Região Comum", type: "Vestimenta", equipped: true, qty: 1, desc: "Vestimenta limpa e bem costurada." },
+          { id: "inv_2", name: "Erva Medicinal Seca", type: "Consumível", equipped: false, qty: 2, desc: "Restaura pequena parcela de resistência física." }
+        ];
+      } else if (roll < 0.93) {
+        social = Math.random() < 0.5 ? "Nobre de Casa Tradicional" : "Família de Cavaleiros Mágicos";
+        origin = pick([
+          "Distrito Nobre da Capital Real",
+          "Propriedade senhorial nos arredores da Capital",
+          "Solar de linhagem mágica na Capital Real"
+        ]);
+        location = `Mansão familiar no ${origin}`;
+        manaMin = 68;
+        manaMax = 96;
+        manaQuality = "Mana abundante e densa (linhagem nobre)";
+        outfit = "Traje nobre bordado com brasão familiar e capa curta";
+        startYul = rand(1600, 4500);
+        startInv = [
+          { id: "inv_1", name: "Traje Nobre Bordado", type: "Vestimenta", equipped: true, qty: 1, desc: "Veste aristocrática que impõe respeito social." },
+          { id: "inv_2", name: "Elixir Menor de Mana", type: "Consumível", equipped: false, qty: 1, desc: "Frasco alquímico que restaura reserva de MP." }
+        ];
+      } else {
+        social = "Órfão sem registro familiar (Anomalia Rara)";
+        origin = pick([
+          "Igreja antiga na Região Esquecida (Hage)",
+          "Orfanato humilde nos limites da Região Comum",
+          "Vilarejo remoto próximo à Zona Neutra"
+        ]);
+        location = `Abrigo / Igreja em ${origin}`;
+        const isTranscendent = Math.random() < 0.42;
+        manaMin = isTranscendent ? 112 : 6;
+        manaMax = isTranscendent ? 155 : 98;
+        manaQuality = isTranscendent
+          ? "Anomalia transcendente (reserva além do limite humano)"
+          : "Anomalia mágica imprevisível";
+        outfit = "Veste simples do orfanato e um amuleto antigo sem inscrição";
+        startYul = rand(0, 30);
+        startInv = [
+          { id: "inv_1", name: "Veste Simples do Abrigo", type: "Vestimenta", equipped: true, qty: 1, desc: "Roupas humildes usadas." },
+          { id: "inv_2", name: "Amuleto Antigo Desgastado", type: "Relíquia", equipped: true, qty: 1, desc: "Um objeto misterioso encontrado junto a você no nascimento." }
+        ];
+      }
+
+      const mana = rand(manaMin, manaMax);
+      const maxMp = Math.max(50, mana * 10);
+
+      return {
+        updatedAt: Date.now(),
+        name,
+        magic,
+        appearance: appearance || "Traços comuns da sua região natal",
+        outfit,
+        customPortraitBase64: "",
+        personality: personality || "Observador, cauteloso e moldado pelo ambiente",
+        difficulty,
+        year,
+        month: rand(1, 12),
+        day: rand(1, 28),
+        birthYear: year,
+        age: 0,
+        origin,
+        location,
+        social,
+        mana,
+        maxMp,
+        currentMp: maxMp,
+        manaQuality,
+        control: rand(2, 12),
+        physical: rand(10, 28),
+        sense: rand(10, 32),
+        health: 100,
+        rep: 0,
+        combatExp: 0,
+        status: "Infância",
+        grimoire: false,
+        grimoireType: "Sem grimório",
+        scene: "Prólogo · Nascimento no Reino Clover",
+        story: "",
+        verdict: null,
+        feedback: "",
+        presentNpcs: [],
+        suggestions: [],
+        knowledge: [],
+        skills: [],
+        inventory: startInv,
+        yul: startYul,
+        combatState: { active: false, stance: "Neutra", distance: "Média", enemies: [] },
+        npcs: [],
+        log: [],
+        sceneArchive: [],
+        world: `Ano ${year}: O Reino Clover vive sob a ordem dos Cavaleiros Mágicos e a rígida hierarquia entre Realeza, Nobreza e Plebeus.`,
+        butterfly: "",
+        historySummary: []
+      };
+    }
+
+    // =========================================================================
+    // PROMPT DE RP, MANA ESTRATÉGICA, BLOQUEIO EPISTÊMICO E COMBATE TÁTICO
+    // =========================================================================
+    function buildSystemInstruction() {
+      return `Você é o Narrador Mestre e Árbitro Implacável de um RPG de mesa / simulador de vida em TEMPO REAL (estilo RP cena a cena) ambientado no universo de BLACK CLOVER (Yūki Tabata).
+
+DIRETRIZES FUNDAMENTAIS DE RP, MANA, HABILIDADES E COMBATE:
+1. RITMO CENA A CENA:
+   - Ações de diálogo, movimento, uso de item ou turno de combate acontecem NO MOMENTO PRESENTE ("daysPassed": 0).
+   - Só avance dias, meses ou anos quando solicitado explicitamente pelo jogador ou no Prólogo inicial (4 anos = 1460 dias).
+   - Toda cena deve conter pessoas reais ("presentNpcs") e diálogos vivos entre aspas ("...").
+
+2. SISTEMA ORGANIZADO DE RESERVA DE MANA (MP) E CUSTO ESTRATÉGICO:
+   - O personagem possui Potência Mágica ("mana", 100 = teto humano normal; >100 = transcendente 100 (+X)) e Reserva de Mana ("currentMp" / "maxMp").
+   - TODO feitiço ou técnica mágica gasta uma quantidade exata e coerente de MP ("mpCost" e "mpDelta" negativo).
+   - REGRA DE COERÊNCIA DE CUSTO DE MANA:
+     * Feitiços cirúrgicos, compressão concentrada, agulhas/lâminas de precisão ou contra-feitiços bem calculados podem ser muito letais gastando POUCA mana (ex.: 15–45 MP), exigindo alto Controle e Domínio.
+     * Feitiços de grande escala, criação massiva ou barreiras de área consomem MUITA mana (ex.: 120–450+ MP).
+     * Técnicas puramente físicas ou Ki (quando aprendidas) custam 0 MP.
+   - Se o personagem não tiver MP suficiente, ele sofre exaustão mágica, falha ou desmaia ("verdictType": "FRACASSO" ou "BLOQUEADO").
+   - Descansar ("Dormir / Descansar (+1 Dia)") ou passar dias regenera MP ("mpDelta" positivo).
+
+3. GRIMÓRIO & HABILIDADES COM NÍVEL DE DOMÍNIO (Nv. 1 a 10):
+   - Registre ou evolua habilidades e feitiços em "skillUpdates" com "name", "category" ("Feitiço" | "Técnica" | "Passiva"), "mpCost", "levelDelta" (1 a 10), "masteryDelta" (0 a 100%) e "description".
+
+4. COMBATE TÁTICO ORGANIZADO ("combatState"):
+   - Quando houver hostilidade, duelo, emboscada ou batalha, ative "combatState.active": true, definindo "stance" (Ofensiva, Defensiva, Evasiva, Furtiva), "distance" (Curta, Média, Longa) e "enemies" (nome, ameaça, condição física e mana estimada).
+   - Avalie o combate cruzando nível de domínio da habilidade, MP gasto, postura/distância, atributos e "combatExp". Sem armadura de roteiro.
+
+5. BLOQUEIO EPISTÊMICO & CERIMÔNIA DO GRIMÓRIO:
+   - Feitiços formais e grimório só existem a partir dos 15 anos (após a Cerimônia na Torre dos Grimórios).
+   - Técnicas avançadas (Mana Skin, Mana Zone, Ki, Runas) exigem aprendizado prévio registrado em "knowledge". Caso contrário, retorne "verdictType": "BLOQUEADO".
+
+6. TRÊS MODOS DE RIGOR NARRATIVO:
+   - "realista" (Implacável): Letalidade máxima, zero concessão, falhas cobram preço imediato.
+   - "dramatico" (Dramático): Tensão cinematográfica com margem justa para superação heroica coerente.
+   - "cronica_sombria" (Crônica Sombria — Dramático & Rústico): Combina intensidade dramática e cinematográfica com o realismo cru, brutal e implacável de ferimentos, política e escassez.
+
+7. INVENTÁRIO E VESTIMENTA:
+   - Atualize "inventoryUpdates" (ADD/REMOVE/EQUIP) e "yulDelta" quando houver comércio, recompensas ou gastos. Se a vestimenta mudar na história, preencha "updatedOutfit".
+
+8. IDIOMA E FORMATO:
+   - Escreva EXCLUSIVAMENTE em Português do Brasil, em segunda pessoa ("Você..."), com diálogos entre aspas ("..."). Retorne APENAS JSON válido.`;
+    }
+
+    const RESPONSE_SCHEMA = {
+      type: "OBJECT",
+      properties: {
+        sceneTitle: { type: "STRING" },
+        currentLocation: { type: "STRING" },
+        timeStepLabel: { type: "STRING" },
+        daysPassed: { type: "INTEGER" },
+        verdictType: {
+          type: "STRING",
+          enum: ["BLOQUEADO", "FRACASSO", "SUCESSO_PARCIAL", "SUCESSO_COERENTE"]
+        },
+        verdictTitle: { type: "STRING" },
+        verdictReason: { type: "STRING" },
+        presentNpcs: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              name: { type: "STRING" },
+              role: { type: "STRING" },
+              mood: { type: "STRING" }
+            },
+            required: ["name", "role", "mood"]
+          }
+        },
+        narrative: { type: "STRING" },
+        consequenceSummary: { type: "STRING" },
+        quickSuggestions: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              tag: { type: "STRING" },
+              text: { type: "STRING" }
+            },
+            required: ["tag", "text"]
+          }
+        },
+        combatState: {
+          type: "OBJECT",
+          properties: {
+            active: { type: "BOOLEAN" },
+            stance: { type: "STRING" },
+            distance: { type: "STRING" },
+            enemies: {
+              type: "ARRAY",
+              items: {
+                type: "OBJECT",
+                properties: {
+                  name: { type: "STRING" },
+                  threat: { type: "STRING" },
+                  condition: { type: "STRING" },
+                  manaEstimate: { type: "STRING" }
+                },
+                required: ["name", "threat", "condition", "manaEstimate"]
+              }
+            }
+          },
+          required: ["active", "stance", "distance", "enemies"]
+        },
+        statDeltas: {
+          type: "OBJECT",
+          properties: {
+            mana: { type: "INTEGER" },
+            mpDelta: { type: "INTEGER" },
+            maxMpDelta: { type: "INTEGER" },
+            control: { type: "INTEGER" },
+            physical: { type: "INTEGER" },
+            sense: { type: "INTEGER" },
+            health: { type: "INTEGER" },
+            rep: { type: "INTEGER" },
+            combatExp: { type: "INTEGER" },
+            yulDelta: { type: "INTEGER" }
+          },
+          required: ["mana", "mpDelta", "maxMpDelta", "control", "physical", "sense", "health", "rep", "combatExp", "yulDelta"]
+        },
+        skillUpdates: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              name: { type: "STRING" },
+              category: { type: "STRING" },
+              mpCost: { type: "INTEGER" },
+              levelDelta: { type: "INTEGER" },
+              masteryDelta: { type: "INTEGER" },
+              description: { type: "STRING" }
+            },
+            required: ["name", "category", "mpCost", "levelDelta", "masteryDelta", "description"]
+          }
+        },
+        inventoryUpdates: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              action: { type: "STRING", enum: ["ADD", "REMOVE", "EQUIP"] },
+              name: { type: "STRING" },
+              type: { type: "STRING" },
+              qty: { type: "INTEGER" },
+              desc: { type: "STRING" }
+            },
+            required: ["action", "name", "type", "qty", "desc"]
+          }
+        },
+        updatedOutfit: { type: "STRING" },
+        newStatus: { type: "STRING" },
+        unlockedGrimoire: { type: "BOOLEAN" },
+        grimoireDescription: { type: "STRING" },
+        newKnowledge: { type: "ARRAY", items: { type: "STRING" } },
+        npcUpdates: {
+          type: "ARRAY",
+          items: {
+            type: "OBJECT",
+            properties: {
+              name: { type: "STRING" },
+              roleOrOrigin: { type: "STRING" },
+              affinityDelta: { type: "INTEGER" },
+              lastEncounterNote: { type: "STRING" }
+            },
+            required: ["name", "roleOrOrigin", "affinityDelta", "lastEncounterNote"]
+          }
+        },
+        worldTimelineUpdate: { type: "STRING" },
+        butterflyEffect: { type: "STRING" },
+        journalTitle: { type: "STRING" },
+        journalEntry: { type: "STRING" },
+        isDead: { type: "BOOLEAN" }
+      },
+      required: [
+        "sceneTitle", "currentLocation", "timeStepLabel", "daysPassed",
+        "verdictType", "verdictTitle", "verdictReason", "presentNpcs",
+        "narrative", "consequenceSummary", "quickSuggestions", "combatState",
+        "statDeltas", "skillUpdates", "inventoryUpdates", "updatedOutfit",
+        "newStatus", "unlockedGrimoire", "grimoireDescription", "newKnowledge",
+        "npcUpdates", "worldTimelineUpdate", "butterflyEffect",
+        "journalTitle", "journalEntry", "isDead"
+      ]
+    };
+
+    // =========================================================================
+    // FALLBACK NARRATIVO OFFLINE (SE NÃO HOUVER CONEXÃO / CHAVE EXTERNA)
+    // =========================================================================
+    function buildOfflineFallbackTurn(playerAction, isOpening) {
+      if (isOpening) {
+        return {
+          sceneTitle: "Infância · Primeiros Passos no Reino Clover",
+          currentLocation: game.location,
+          timeStepLabel: "+4 Anos",
+          daysPassed: 1460,
+          verdictType: "SUCESSO_COERENTE",
+          verdictTitle: "Despertar da Consciência",
+          verdictReason: "Aos 4 anos, você começa a compreender o mundo ao seu redor.",
+          presentNpcs: [
+            { name: "Morador Local", role: "Vizinho", mood: "Atento" },
+            { name: "Criança da Vizinhança", role: "Colega", mood: "Curiosa" }
+          ],
+          narrative: `Você nasceu em ${game.origin}, pertencendo à camada ${game.social}. Os primeiros quatro anos passam entre o cotidiano da região e os primeiros sinais de sua natureza.\n\nHoje, sob a luz da tarde em ${game.location}, um vizinho observa você e comenta em voz alta:\n"Ei, ${game.name}! Não fique parado aí no meio do caminho, venha ajudar ou vá brincar com os outros!"`,
+          consequenceSummary: "Você chegou aos 4 anos de idade e observa o ambiente ao redor.",
+          quickSuggestions: [
+            { tag: "Diálogo", text: 'Respondo com educação: "Estou indo agora mesmo!"' },
+            { tag: "Observação", text: "Observo discretamente as pessoas ao redor antes de falar." },
+            { tag: "Físico", text: "Corro pelo pátio para testar minha agilidade física." }
+          ],
+          combatState: { active: false, stance: "Neutra", distance: "Média", enemies: [] },
+          statDeltas: { mana: 0, mpDelta: 0, maxMpDelta: 0, control: 1, physical: 2, sense: 2, health: 0, rep: 0, combatExp: 0, yulDelta: 0 },
+          skillUpdates: [],
+          inventoryUpdates: [],
+          updatedOutfit: "",
+          newStatus: "Infância",
+          unlockedGrimoire: false,
+          grimoireDescription: "",
+          newKnowledge: ["Noções básicas de convivência no Reino Clover"],
+          npcUpdates: [{ name: "Morador Local", roleOrOrigin: game.origin, affinityDelta: 2, lastEncounterNote: "Conversou com você na infância." }],
+          worldTimelineUpdate: game.world,
+          butterflyEffect: "",
+          journalTitle: "Primeiros Passos",
+          journalEntry: `Aos 4 anos em ${game.origin}, sua jornada consciente começou.`,
+          isDead: false
+        };
+      }
+
+      const lower = playerAction.toLowerCase();
+      const tryingSpellEarly = game.age < 15 && /(feitiço|conjuro|invoco|mana skin|mana zone|ki\b|magia de)/.test(lower);
+      if (tryingSpellEarly) {
+        return {
+          sceneTitle: game.scene,
+          currentLocation: game.location,
+          timeStepLabel: "Bloqueado",
+          daysPassed: 0,
+          verdictType: "BLOQUEADO",
+          verdictTitle: "Fora do Conhecimento / Sem Grimório",
+          verdictReason: `Aos ${game.age} anos e sem um grimório (conquistado apenas aos 15 anos), ${game.name} não possui conhecimento ou canalização para conjurar feitiços formais.`,
+          presentNpcs: game.presentNpcs || [],
+          narrative: `Você tenta forçar uma técnica que ainda não compreende. Sem grimório e sem instrução formal para a sua idade (${game.age} anos), a tentativa não passa de um impulso frustrado antes mesmo de tomar forma.`,
+          consequenceSummary: "Ação bloqueada pelas leis naturais de Black Clover.",
+          quickSuggestions: game.suggestions || [],
+          combatState: game.combatState || { active: false, stance: "Neutra", distance: "Média", enemies: [] },
+          statDeltas: { mana: 0, mpDelta: 0, maxMpDelta: 0, control: 0, physical: 0, sense: 0, health: 0, rep: 0, combatExp: 0, yulDelta: 0 },
+          skillUpdates: [],
+          inventoryUpdates: [],
+          updatedOutfit: "",
+          newStatus: game.status,
+          unlockedGrimoire: false,
+          grimoireDescription: "",
+          newKnowledge: [],
+          npcUpdates: [],
+          worldTimelineUpdate: game.world,
+          butterflyEffect: "",
+          journalTitle: "",
+          journalEntry: "",
+          isDead: false
+        };
+      }
+
+      const isTimeSkip = /avançar|passar|dormir|descansar/.test(lower);
+      const days = /ano/.test(lower) ? 360 : /mês|mes/.test(lower) ? 30 : /dia|dormir|descansar/.test(lower) ? 1 : 0;
+      const gotGrimoire = !game.grimoire && (game.age + Math.floor(days / 360)) >= 15;
+
+      return {
+        sceneTitle: gotGrimoire ? "A Cerimônia do Grimório" : game.scene,
+        currentLocation: game.location,
+        timeStepLabel: days > 0 ? `+${days} dias` : "Momento presente",
+        daysPassed: days,
+        verdictType: "SUCESSO_COERENTE",
+        verdictTitle: "Ação Executada (Modo Offline)",
+        verdictReason: "Configure uma Chave API Gemini no Lobby se estiver hospedando fora do ambiente integrado para habilitar diálogos completos da IA.",
+        presentNpcs: game.presentNpcs || [],
+        narrative: `Você age conforme sua intenção: "${playerAction}".\n\nO ambiente ao redor reage ao seu movimento${gotGrimoire ? ". Ao completar 15 anos, você participa da Cerimônia do Grimório e um livro responde à sua afinidade mágica!" : "."}`,
+        consequenceSummary: "Seu estado foi atualizado e salvo com segurança.",
+        quickSuggestions: [
+          { tag: "Treino", text: "Pratico meu condicionamento físico e concentração." },
+          { tag: "Social", text: "Converso com as pessoas próximas para ouvir rumores do reino." },
+          { tag: "Descanso", text: "Descanso para recuperar minha reserva de mana." }
+        ],
+        combatState: { active: false, stance: "Neutra", distance: "Média", enemies: [] },
+        statDeltas: { mana: 0, mpDelta: days >= 1 ? game.maxMp : 0, maxMpDelta: 0, control: 1, physical: 1, sense: 1, health: days >= 1 ? 10 : 0, rep: 0, combatExp: 0, yulDelta: 0 },
+        skillUpdates: gotGrimoire ? [{ name: `Projétil Básico de ${game.magic}`, category: "Feitiço", mpCost: 20, levelDelta: 0, masteryDelta: 20, description: "Manifestação inicial canalizada pelo grimório." }] : [],
+        inventoryUpdates: [],
+        updatedOutfit: "",
+        newStatus: gotGrimoire ? "Portador de Grimório" : game.status,
+        unlockedGrimoire: gotGrimoire,
+        grimoireDescription: gotGrimoire ? "Grimório de 3 Trevos" : "",
+        newKnowledge: gotGrimoire ? ["Canalização básica de grimório"] : [],
+        npcUpdates: [],
+        worldTimelineUpdate: game.world,
+        butterflyEffect: "",
+        journalTitle: gotGrimoire ? "Conquista do Grimório" : (days > 0 ? "Passagem do Tempo" : ""),
+        journalEntry: gotGrimoire ? "Você recebeu seu grimório aos 15 anos." : (days > 0 ? "O tempo avançou no Reino Clover." : ""),
+        isDead: false
+      };
+    }
+
+    // =========================================================================
+    // EXECUÇÃO DE TURNO DE RP COM GEMINI
+    // =========================================================================
+    async function runTurnWithAI(playerAction, isOpening = false) {
+      if (isGenerating) return;
+      showMsg("gameMsg", "");
+      showMsg("creationMsg", "");
+      setBusy(true);
+
+      const recentHistory = (game.historySummary || []).slice(-7).join("\n- ");
+      const npcSummary = (game.npcs || []).length
+        ? game.npcs.map(n => `${n.name} [${n.roleOrOrigin}] | Afinidade: ${n.affinity}/100 | Último encontro: ${n.lastEncounterNote}`).join("\n  ")
+        : "Nenhum vínculo registrado ainda.";
+      const skillsSummary = (game.skills || []).length
+        ? game.skills.map(s => `${s.name} (${s.category} · Nv.${s.level}/10 [${getMasteryRank(s.level)}] · Custo: ${s.mpCost} MP)`).join("\n  ")
+        : "Nenhuma habilidade adquirida ainda.";
+      const invSummary = (game.inventory || []).length
+        ? game.inventory.map(i => `${i.name} x${i.qty} [${i.type}${i.equipped ? " - EQUIPADO" : ""}]`).join(", ")
+        : "Vazio";
+
+      const difficultyLabel =
+        game.difficulty === "realista" ? "IMPLACÁVEL (Realista, letal, zero armadura de roteiro)" :
+        game.difficulty === "cronica_sombria" ? "CRÔNICA SOMBRIA (Dramático & Rústico: peso cinematográfico aliado a realismo brutal e implacável)" :
+        "DRAMÁTICO (Equilíbrio narrativo rigoroso)";
+
+      const userPrompt = isOpening
+        ? `PRÓLOGO · NASCIMENTO E PRIMEIRA CENA INTERATIVA:
+Crie o nascimento de ${game.name} no Reino Clover e avance rapidamente os primeiros 4 anos ("daysPassed": 1460) para colocar o jogador em sua primeira cena viva de infância aos 4 anos, cercado por pessoas reais do seu ambiente.
+Dados sorteados pela realidade:
+- Nome: ${game.name} | Atributo Mágico Latente: ${game.magic}
+- Aparência: ${game.appearance} | Vestimenta inicial: ${game.outfit}
+- Personalidade/Motivações: ${game.personality}
+- Ano de Nascimento: ${game.year} | Origem: ${game.origin} (${game.social})
+- Potência Mágica: ${formatStatPlain(game.mana)} (${game.manaQuality}) | Reserva MP: ${game.currentMp}/${game.maxMp} MP
+- Controle: ${formatStatPlain(game.control)} | Físico: ${formatStatPlain(game.physical)} | Percepção: ${formatStatPlain(game.sense)}
+- Modo de Rigor: ${difficultyLabel}
+
+Requisitos do Prólogo:
+- Apresente o contexto social de nascimento e imediatamente coloque ${game.name} (aos 4 anos) em uma cena cotidiana com pelo menos 2 pessoas presentes ("presentNpcs") que falem com ele entre aspas, dando um gancho claro para o jogador responder.
+- Mantenha "unlockedGrimoire": false e adicione em "newKnowledge" apenas noções infantis básicas compatíveis com o ambiente.`
+        : `ESTADO ATUAL DO PERSONAGEM (RP EM TEMPO REAL):
+- Nome: ${game.name} | Atributo Mágico: ${game.magic}
+- Aparência: ${game.appearance} | Vestimenta Atual: ${game.outfit}
+- Personalidade: ${game.personality}
+- Data Atual: Dia ${game.day}, Mês ${game.month}, Ano ${game.year} | Idade: ${game.age} anos
+- Local Atual: ${game.location}
+- Origem & Classe Social: ${game.origin} (${game.social})
+- Reserva de Mana Atual: ${game.currentMp} / ${game.maxMp} MP
+- Atributos (100 = teto humano normal; >100 = 100 (+X)): Potência Mágica ${formatStatPlain(game.mana)} (${game.manaQuality}) | Controle ${formatStatPlain(game.control)} | Físico ${formatStatPlain(game.physical)} | Percepção ${formatStatPlain(game.sense)} | Resistência ${formatStatPlain(game.health)} | Reputação ${game.rep} | Experiência de Combate ${game.combatExp}
+- Estado: ${game.status}
+- Grimório: ${game.grimoire ? `Possui (${game.grimoireType})` : "Não possui (só aos 15+ anos)"}
+- Combate Ativo: ${game.combatState?.active ? `SIM (Postura: ${game.combatState.stance}, Distância: ${game.combatState.distance})` : "Não"}
+- Habilidades & Domínio:
+  ${skillsSummary}
+- Inventário (${game.yul} Yuls): ${invSummary}
+- Conhecimentos & Conceitos Dominados: ${(game.knowledge || []).length ? game.knowledge.join(", ") : "Nenhum conhecimento mágico formal"}
+- Pessoas Presentes na Cena Anterior: ${(game.presentNpcs || []).map(p => `${p.name} (${p.role} - ${p.mood})`).join(", ") || "Ninguém"}
+- Elenco & Vínculos Conhecidos:
+  ${npcSummary}
+- Linha Temporal Canônica Atual: ${game.world}
+- Divergências (Efeito Borboleta): ${game.butterfly || "Nenhuma até o momento"}
+- Últimos acontecimentos:
+${recentHistory ? `- ${recentHistory}` : "- Início da jornada."}
+- Modo de Rigor: ${difficultyLabel}
+
+AÇÃO / FALA DO JOGADOR AGORA:
+"${playerAction}"
+
+Instruções para este turno:
+- Se for diálogo, combate tático ou ação imediata, mantenha "daysPassed": 0 e faça os NPCs/oponentes reagirem diretamente entre aspas.
+- Desconte ou regenere MP corretamente em "statDeltas.mpDelta" conforme o custo estratégico do feitiço/técnica ou descanso.
+- Evolua habilidades usadas em "skillUpdates" e atualize "combatState" se houver confronto.
+- Aplique rigorosamente o Bloqueio Epistêmico se o jogador tentar feitiços/técnicas desconhecidas ou fora da idade.`;
+
+      const keyToUse = getActiveApiKey();
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${keyToUse}`;
+      const payload = {
+        contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+        systemInstruction: { parts: [{ text: buildSystemInstruction() }] },
+        generationConfig: {
+          responseMimeType: "application/json",
+          responseSchema: RESPONSE_SCHEMA,
+          temperature: 0.82
+        }
+      };
+
+      try {
+        const result = await fetchWithBackoff(apiUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const rawJson = result?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (!rawJson) throw new Error("Resposta vazia da IA.");
+
+        const data = JSON.parse(rawJson);
+        await applyTurnOutcome(data, playerAction, isOpening);
+      } catch (err) {
+        console.warn("Usando fallback local seguro devido a falha na chamada:", err);
+        const fallbackData = buildOfflineFallbackTurn(playerAction, isOpening);
+        await applyTurnOutcome(fallbackData, playerAction, isOpening);
+      } finally {
+        setBusy(false);
+      }
+    }
+
+    function advanceCalendar(days) {
+      if (days <= 0) return;
+      game.day += days;
+      while (game.day > 30) {
+        game.day -= 30;
+        game.month += 1;
+        if (game.month > 12) {
+          game.month = 1;
+          game.year += 1;
+        }
+      }
+      game.age = Math.max(0, game.year - game.birthYear);
+    }
+
+    async function applyTurnOutcome(data, playerAction, isOpening) {
+      const isBlocked = data.verdictType === "BLOQUEADO" && !isOpening;
+      const days = isBlocked ? 0 : Math.max(0, Math.min(3650, Number(data.daysPassed) || 0));
+
+      if (!isBlocked) {
+        advanceCalendar(days);
+
+        const d = data.statDeltas || {};
+        game.mana = clamp(game.mana + (Number(d.mana) || 0), 0, 9999);
+        game.maxMp = Math.max(50, game.maxMp + (Number(d.maxMpDelta) || 0) + ((Number(d.mana) || 0) * 10));
+        game.currentMp = clamp(game.currentMp + (Number(d.mpDelta) || 0), 0, game.maxMp);
+
+        if (days >= 1 && (Number(d.mpDelta) || 0) === 0) {
+          game.currentMp = game.maxMp;
+        }
+
+        game.control = clamp(game.control + (Number(d.control) || 0), 0, 9999);
+        game.physical = clamp(game.physical + (Number(d.physical) || 0), 0, 9999);
+        game.sense = clamp(game.sense + (Number(d.sense) || 0), 0, 9999);
+        game.health = clamp(game.health + (Number(d.health) || 0), 0, 9999);
+        game.rep = clamp(game.rep + (Number(d.rep) || 0), -999, 999);
+        game.combatExp = Math.max(0, (game.combatExp || 0) + (Number(d.combatExp) || 0));
+        game.yul = Math.max(0, (game.yul || 0) + (Number(d.yulDelta) || 0));
+
+        if (game.age >= 15 && data.unlockedGrimoire && !game.grimoire) {
+          game.grimoire = true;
+          game.grimoireType = data.grimoireDescription || "Grimório de 3 Trevos";
+          if (!game.inventory.some(i => i.name.toLowerCase().includes("grimório"))) {
+            game.inventory.unshift({
+              id: "inv_grimoire",
+              name: game.grimoireType,
+              type: "Grimório",
+              equipped: true,
+              qty: 1,
+              desc: `Canalizador pessoal de ${game.magic}.`
+            });
+          }
+        }
+
+        if (Array.isArray(data.newKnowledge)) {
+          data.newKnowledge.forEach(item => {
+            const clean = String(item || "").trim();
+            if (clean && !game.knowledge.some(k => k.toLowerCase() === clean.toLowerCase())) {
+              game.knowledge.push(clean);
+            }
+          });
+        }
+
+        if (Array.isArray(data.skillUpdates)) {
+          data.skillUpdates.forEach(su => {
+            if (!su || !su.name) return;
+            const cleanName = su.name.trim();
+            if (su.category === "Feitiço" && !game.grimoire) return;
+            const idx = game.skills.findIndex(s => s.name.toLowerCase() === cleanName.toLowerCase());
+            if (idx >= 0) {
+              const sk = game.skills[idx];
+              sk.mastery = (sk.mastery || 0) + (Number(su.masteryDelta) || 0);
+              let lvGain = Number(su.levelDelta) || 0;
+              while (sk.mastery >= 100) {
+                sk.mastery -= 100;
+                lvGain += 1;
+              }
+              sk.level = clamp((sk.level || 1) + lvGain, 1, 10);
+              if (typeof su.mpCost === "number") sk.mpCost = Math.max(0, su.mpCost);
+              if (su.description) sk.description = su.description;
+            } else {
+              game.skills.push({
+                name: cleanName,
+                category: su.category || "Técnica",
+                mpCost: Math.max(0, Number(su.mpCost) || 0),
+                level: clamp(1 + (Number(su.levelDelta) || 0), 1, 10),
+                mastery: clamp(Number(su.masteryDelta) || 15, 0, 99),
+                description: su.description || "Habilidade desenvolvida durante a jornada."
+              });
+            }
+          });
+        }
+
+        if (Array.isArray(data.inventoryUpdates)) {
+          data.inventoryUpdates.forEach(iu => {
+            if (!iu || !iu.name) return;
+            const cleanName = iu.name.trim();
+            const idx = game.inventory.findIndex(i => i.name.toLowerCase() === cleanName.toLowerCase());
+            if (iu.action === "ADD") {
+              if (idx >= 0) {
+                game.inventory[idx].qty += Math.max(1, Number(iu.qty) || 1);
+              } else {
+                game.inventory.push({
+                  id: `inv_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,
+                  name: cleanName,
+                  type: iu.type || "Item",
+                  equipped: false,
+                  qty: Math.max(1, Number(iu.qty) || 1),
+                  desc: iu.desc || "Item obtido na jornada."
+                });
+              }
+            } else if (iu.action === "REMOVE" && idx >= 0) {
+              game.inventory[idx].qty -= Math.max(1, Number(iu.qty) || 1);
+              if (game.inventory[idx].qty <= 0) game.inventory.splice(idx, 1);
+            } else if (iu.action === "EQUIP" && idx >= 0) {
+              game.inventory[idx].equipped = true;
+            }
+          });
+        }
+
+        if (data.updatedOutfit && data.updatedOutfit.trim()) {
+          game.outfit = data.updatedOutfit.trim();
+        }
+
+        if (Array.isArray(data.npcUpdates)) {
+          data.npcUpdates.forEach(u => {
+            if (!u || !u.name) return;
+            const cleanName = u.name.trim();
+            const idx = game.npcs.findIndex(n => n.name.toLowerCase() === cleanName.toLowerCase());
+            const delta = clamp(Number(u.affinityDelta) || 0, -50, 50);
+            if (idx >= 0) {
+              game.npcs[idx].affinity = clamp((game.npcs[idx].affinity || 0) + delta, -100, 100);
+              if (u.roleOrOrigin) game.npcs[idx].roleOrOrigin = u.roleOrOrigin.trim();
+              if (u.lastEncounterNote) game.npcs[idx].lastEncounterNote = u.lastEncounterNote.trim();
+            } else {
+              game.npcs.unshift({
+                name: cleanName,
+                roleOrOrigin: (u.roleOrOrigin || "Habitante do Reino Clover").trim(),
+                affinity: clamp(delta, -100, 100),
+                lastEncounterNote: (u.lastEncounterNote || "Conhecido recentemente.").trim()
+              });
+            }
+          });
+        }
+
+        if (data.currentLocation) game.location = data.currentLocation;
+        if (data.worldTimelineUpdate) game.world = data.worldTimelineUpdate;
+        if (data.butterflyEffect && data.butterflyEffect.trim()) {
+          game.butterfly = data.butterflyEffect.trim();
+        }
+
+        if (game.health <= 0 || data.isDead) {
+          game.health = 0;
+          game.status = "Morto";
+          game.scene = data.sceneTitle || "Epílogo · O Fim da Jornada";
+          game.combatState = { active: false, stance: "Neutra", distance: "Média", enemies: [] };
+        } else {
+          game.status = data.newStatus || game.status;
+          game.scene = data.sceneTitle || game.scene;
+          game.combatState = data.combatState || { active: false, stance: "Neutra", distance: "Média", enemies: [] };
+        }
+
+        if (data.journalTitle && data.journalEntry && (days > 0 || isOpening || Math.abs(d.rep || 0) >= 2 || (data.npcUpdates || []).length > 0)) {
+          game.log.unshift({
+            title: data.journalTitle,
+            desc: data.journalEntry,
+            age: game.age,
+            year: game.year
+          });
+        }
+
+        game.historySummary.push(
+          `[Idade ${game.age}, Ano ${game.year}, ${game.location}, MP ${game.currentMp}/${game.maxMp}] Ação: ${isOpening ? "Nascimento" : playerAction} -> ${data.consequenceSummary}`
+        );
+      }
+
+      game.presentNpcs = Array.isArray(data.presentNpcs) ? data.presentNpcs : [];
+      game.suggestions = Array.isArray(data.quickSuggestions) ? data.quickSuggestions.slice(0, 3) : [];
+      game.verdict = {
+        type: isBlocked ? "BLOQUEADO" : (data.verdictType || "SUCESSO_COERENTE"),
+        title: data.verdictTitle || "Desfecho da Realidade",
+        reason: data.verdictReason || ""
+      };
+      game.story = data.narrative || "";
+      game.feedback = data.consequenceSummary || "";
+
+      game.sceneArchive.unshift({
+        sceneTitle: game.scene,
+        dateLabel: `Dia ${game.day}/${game.month}/${game.year} · ${game.age} anos`,
+        location: game.location,
+        action: isOpening ? "Nascimento no Reino Clover" : playerAction,
+        narrative: game.story
+      });
+
+      render();
+      await persistSlotToDB(activeSlotId, game);
+
+      if (autoNarrate && game.story) {
+        narrateText(game.story);
+      } else {
+        stopNarration();
+      }
+    }
+
+    // =========================================================================
+    // NARRAÇÃO POR VOZ (SPEECHSYNTHESIS PT-BR)
+    // =========================================================================
+    function stopNarration() {
+      if ("speechSynthesis" in window) {
+        window.speechSynthesis.cancel();
+      }
+      const statusEl = $("ttsStatusText");
+      if (statusEl) {
+        statusEl.textContent = autoNarrate ? "🎙️ Voz Auto: ON" : "🎙️ Voz pronta";
+        statusEl.classList.remove("speaking");
+      }
+      if ($("stopSpeechBtn")) $("stopSpeechBtn").classList.add("hidden");
+    }
+
+    function narrateText(text) {
+      if (!text || !text.trim()) return;
+      if (!("speechSynthesis" in window)) {
+        $("ttsStatusText").textContent = "⚠️ Voz indisponível neste navegador";
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.lang = "pt-BR";
+      utterance.rate = 1.03;
+      utterance.pitch = 0.96;
+
+      const voices = window.speechSynthesis.getVoices();
+      const ptVoice = voices.find(v => v.lang && v.lang.toLowerCase().includes("pt-br")) ||
+                      voices.find(v => v.lang && v.lang.toLowerCase().startsWith("pt"));
+      if (ptVoice) utterance.voice = ptVoice;
+
+      const statusEl = $("ttsStatusText");
+      statusEl.textContent = "🔊 Narrando cena...";
+      statusEl.classList.add("speaking");
+      $("stopSpeechBtn").classList.remove("hidden");
+
+      utterance.onend = () => stopNarration();
+      utterance.onerror = () => stopNarration();
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    if ("speechSynthesis" in window) {
+      window.speechSynthesis.onvoiceschanged = () => window.speechSynthesis.getVoices();
+    }
+
+    // =========================================================================
+    // RENDERIZAÇÃO DO LOBBY DE 6 SLOTS
+    // =========================================================================
+    function renderLobby() {
+      stopNarration();
+      game = null;
+
+      $("lobbyPanel").classList.remove("hidden");
+      $("creation").classList.add("hidden");
+      $("game").classList.add("hidden");
+      $("characterState").classList.add("hidden");
+      $("skillsPanel").classList.add("hidden");
+      $("inventoryPanel").classList.add("hidden");
+      $("emptyState").classList.remove("hidden");
+      $("lobbyBtn").classList.add("hidden");
+      $("resetBtn").classList.add("hidden");
+      $("historyModalBtn").classList.add("hidden");
+      $("npcList").textContent = "Nenhum vínculo relevante formado ainda.";
+      $("npcCount").textContent = "0";
+      $("journal").textContent = "Nenhum acontecimento registrado.";
+      $("logCount").textContent = "0";
+      $("worldState").textContent = "A linha temporal canônica será definida quando sua jornada começar.";
+      $("butterflyState").classList.add("hidden");
+
+      const grid = $("slotsGrid");
+      const cards = [];
+
+      for (let i = 1; i <= MAX_SLOTS; i++) {
+        const slotId = `slot_${i}`;
+        const saved = slotsCache[slotId];
+
+        if (!saved) {
+          cards.push(`
+            <div class="slot-card empty-slot">
+              <div class="slot-num">Slot #${i} · Vazio</div>
+              <div class="muted" style="font-size:13px;">Nenhuma vida gravada neste espaço.</div>
+              <button type="button" class="btn primary start-slot-btn" data-slot="${slotId}">+ Iniciar Nova Vida</button>
+            </div>
+          `);
+        } else {
+          const isDead = saved.status === "Morto";
+          const savedTimeStr = saved.updatedAt
+            ? new Date(saved.updatedAt).toLocaleString("pt-BR", { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+            : "Salvo";
+
+          cards.push(`
+            <div class="slot-card">
+              <div class="slot-top">
+                <div class="slot-avatar">${getPortraitHtml(saved, true)}</div>
+                <div class="slot-info">
+                  <div class="slot-title-row">
+                    <span class="slot-num">Slot #${i} · ${savedTimeStr}</span>
+                    <span class="pill" style="margin:0;color:${isDead ? "var(--red)" : "var(--green)"};border-color:${isDead ? "#6e3139" : "#3f6657"};">${isDead ? "✝ Morto" : "● Vivo"}</span>
+                  </div>
+                  <div class="slot-name">${escapeHtml(saved.name)}</div>
+                  <div class="slot-meta">${escapeHtml(saved.magic)} · ${saved.age} anos (Ano ${saved.year})</div>
+                  <div class="slot-meta" style="color:#8cc2ff;">MP: ${saved.currentMp}/${saved.maxMp} · ${escapeHtml(saved.social || "")}</div>
+                </div>
+              </div>
+              <div class="slot-scene"><strong>${escapeHtml(saved.scene || "Jornada em curso")}</strong></div>
+              <div class="slot-actions">
+                <button type="button" class="btn primary load-slot-btn" data-slot="${slotId}">${isDead ? "Reler Epílogo" : "Continuar Jornada"}</button>
+                <button type="button" class="btn subtle export-slot-btn" data-slot="${slotId}">Exportar Save (.json)</button>
+                <button type="button" class="btn subtle danger delete-slot-btn" data-slot="${slotId}">Apagar Slot</button>
+              </div>
+            </div>
+          `);
+        }
+      }
+
+      grid.innerHTML = cards.join("");
+
+      grid.querySelectorAll(".start-slot-btn").forEach(btn => {
+        btn.onclick = () => {
+          activeSlotId = btn.getAttribute("data-slot");
+          openCreationForSlot(activeSlotId);
+        };
+      });
+
+      grid.querySelectorAll(".load-slot-btn").forEach(btn => {
+        btn.onclick = () => {
+          activeSlotId = btn.getAttribute("data-slot");
+          game = migrateGameSchema(slotsCache[activeSlotId]);
+          render();
+          setBusy(false);
+        };
+      });
+
+      grid.querySelectorAll(".export-slot-btn").forEach(btn => {
+        btn.onclick = () => {
+          const sId = btn.getAttribute("data-slot");
+          const data = slotsCache[sId];
+          if (data) downloadJsonSave(data, sId);
+        };
+      });
+
+      grid.querySelectorAll(".delete-slot-btn").forEach(btn => {
+        btn.onclick = async () => {
+          const sId = btn.getAttribute("data-slot");
+          if (btn.dataset.confirm === "1") {
+            await deleteSlotFromDB(sId);
+            renderLobby();
+          } else {
+            btn.dataset.confirm = "1";
+            btn.textContent = "Confirmar?";
+            setTimeout(() => {
+              if (btn) {
+                btn.dataset.confirm = "";
+                btn.textContent = "Apagar Slot";
+              }
+            }, 3000);
+          }
+        };
+      });
+    }
+
+    function openCreationForSlot(slotId) {
+      activeSlotId = slotId;
+      const slotNumber = slotId.replace("slot_", "");
+      $("creationHeader").textContent = `Crie seu personagem · Slot #${slotNumber}`;
+      $("lobbyPanel").classList.add("hidden");
+      $("creation").classList.remove("hidden");
+      $("game").classList.add("hidden");
+      showMsg("creationMsg", "");
+    }
+
+    // =========================================================================
+    // RENDERIZAÇÃO DA INTERFACE DE JOGO ATIVA
+    // =========================================================================
+    function render() {
+      if (!game) return;
+
+      $("lobbyPanel").classList.add("hidden");
+      $("creation").classList.add("hidden");
+      $("game").classList.remove("hidden");
+      $("emptyState").classList.add("hidden");
+      $("characterState").classList.remove("hidden");
+      $("skillsPanel").classList.remove("hidden");
+      $("inventoryPanel").classList.remove("hidden");
+      $("lobbyBtn").classList.remove("hidden");
+      $("resetBtn").classList.remove("hidden");
+      $("historyModalBtn").classList.remove("hidden");
+
+      $("sceneTitle").textContent = game.scene;
+      $("dateTag").textContent = `Ano ${game.year} (Mês ${game.month}) · ${game.age} ${game.age === 1 ? "ano" : "anos"}`;
+      $("locationTag").textContent = `📍 ${game.location}`;
+      $("storyText").innerHTML = formatNarrativeHtml(game.story);
+
+      // Retrato Dinâmico SVG ou Imagem Personalizada
+      $("portraitName").textContent = `${game.name} (${game.age} anos)`;
+      $("portraitOutfit").textContent = `Vestimenta: ${game.outfit}`;
+      $("portraitFrame").innerHTML = getPortraitHtml(game, false);
+
+      // Reserva de Mana Organizada
+      const curMp = Math.max(0, Math.round(game.currentMp || 0));
+      const maxMp = Math.max(1, Math.round(game.maxMp || 100));
+      const mpPct = clamp(Math.round((curMp / maxMp) * 100), 0, 100);
+      $("manaNumbers").textContent = `${curMp} / ${maxMp} MP (${mpPct}%)`;
+      const mpFill = $("manaBarFill");
+      mpFill.style.width = `${mpPct}%`;
+      mpFill.classList.toggle("low", mpPct <= 25);
+      $("manaEfficiencyNote").textContent = `Potência Mágica: ${formatStatPlain(game.mana)} · ${game.manaQuality}`;
+
+      // Painel de Combate Tático
+      const cPanel = $("combatPanel");
+      if (game.combatState && game.combatState.active && game.status !== "Morto") {
+        cPanel.classList.remove("hidden");
+        $("combatTacticalInfo").textContent = `Postura: ${game.combatState.stance || "Neutra"} · Distância: ${game.combatState.distance || "Média"} · Exp. Combate: ${game.combatExp || 0}`;
+        const enemies = game.combatState.enemies || [];
+        $("combatGrid").innerHTML = enemies.length
+          ? enemies.map(en => `
+              <div class="combat-card">
+                <strong style="color:#ffb3bc;">${escapeHtml(en.name)}</strong>
+                <div class="muted" style="font-size:11.5px;">Ameaça: ${escapeHtml(en.threat)}</div>
+                <div style="font-size:11.5px;">Estado: ${escapeHtml(en.condition)} · Mana: ${escapeHtml(en.manaEstimate)}</div>
+              </div>
+            `).join("")
+          : `<div class="combat-card">Situação de combate tático em curso.</div>`;
+      } else {
+        cPanel.classList.add("hidden");
+      }
+
+      // Pessoas Presentes na Cena (Clicáveis)
+      const presentEl = $("presentNpcsList");
+      if ((game.presentNpcs || []).length > 0) {
+        presentEl.innerHTML = game.presentNpcs.map(p => `
+          <button type="button" class="npc-chip" data-npc="${escapeHtml(p.name)}" title="Clique para falar diretamente com ${escapeHtml(p.name)}">
+            <span class="mood-dot"></span>
+            <strong>${escapeHtml(p.name)}</strong>
+            <span class="muted">(${escapeHtml(p.role)} · ${escapeHtml(p.mood)})</span>
+          </button>
+        `).join("");
+
+        presentEl.querySelectorAll(".npc-chip").forEach(chip => {
+          chip.onclick = () => {
+            const npcName = chip.getAttribute("data-npc");
+            const input = $("playerAction");
+            input.value = `Me viro para ${npcName} e digo: "`;
+            input.focus();
+          };
+        });
+      } else {
+        presentEl.innerHTML = `<span class="muted" style="font-size:12px;">Você está sozinho neste instante.</span>`;
+      }
+
+      // Veredito da Realidade
+      const vBox = $("realityVerdict");
+      if (game.verdict && game.verdict.title) {
+        const type = game.verdict.type || "SUCESSO_COERENTE";
+        const labelMap = {
+          BLOQUEADO: "⛔ BLOQUEADO · Fora do Conhecimento",
+          FRACASSO: "💥 FRACASSO",
+          SUCESSO_PARCIAL: "⚖️ SUCESSO PARCIAL",
+          SUCESSO_COERENTE: "✦ SUCESSO COERENTE"
+        };
+        vBox.className = `verdict-bar ${type}`;
+        vBox.innerHTML = `
+          <div class="verdict-header">
+            <span class="verdict-badge">${labelMap[type] || type}</span>
+            <span class="verdict-title">${escapeHtml(game.verdict.title)}</span>
+          </div>
+          ${game.verdict.reason ? `<span>${escapeHtml(game.verdict.reason)}</span>` : ""}
+        `;
+        vBox.classList.remove("hidden");
+      } else {
+        vBox.classList.add("hidden");
+      }
+
+      // Resumo de Consequências
+      const fbBox = $("turnFeedback");
+      if (game.feedback) {
+        fbBox.textContent = `Consequências: ${game.feedback}`;
+        fbBox.classList.remove("hidden");
+      } else {
+        fbBox.classList.add("hidden");
+      }
+
+      // Sugestões Rápidas
+      const sugList = $("suggestionsList");
+      if ((game.suggestions || []).length > 0 && game.status !== "Morto") {
+        $("suggestionsBox").classList.remove("hidden");
+        sugList.innerHTML = game.suggestions.map((s, idx) => `
+          <button type="button" class="suggestion-btn" data-idx="${idx}">
+            <span class="tag">[${escapeHtml(s.tag || "Opção")}]</span>${escapeHtml(s.text)}
+          </button>
+        `).join("");
+
+        sugList.querySelectorAll(".suggestion-btn").forEach(btn => {
+          btn.onclick = () => {
+            const idx = Number(btn.getAttribute("data-idx"));
+            const chosen = game.suggestions[idx];
+            if (chosen && !isGenerating) {
+              $("playerAction").value = "";
+              runTurnWithAI(chosen.text, false);
+            }
+          };
+        });
+      } else {
+        $("suggestionsBox").classList.add("hidden");
+      }
+
+      // Controles de Vida / Morte
+      const isDead = game.status === "Morto";
+      $("actionControls").classList.toggle("hidden", isDead);
+      $("deathControls").classList.toggle("hidden", !isDead);
+
+      // Ficha de Atributos com 100 (+X)
+      const diffMap = {
+        realista: "Implacável",
+        dramatico: "Dramático",
+        cronica_sombria: "Crônica Sombria"
+      };
+      $("difficultyBadge").textContent = diffMap[game.difficulty] || "Rigor";
+
+      const statItems = [
+        ["Potência Mágica", game.mana, game.mana < 15],
+        ["Controle", game.control, false],
+        ["Físico", game.physical, false],
+        ["Percepção", game.sense, false],
+        ["Resistência", game.health, game.health <= 30],
+        ["Reputação", null, game.rep < -15, game.rep > 0 ? `+${game.rep}` : `${game.rep}`]
+      ];
+
+      $("stats").innerHTML = statItems.map(([label, rawNum, danger, customText]) => {
+        const isTranscendent = typeof rawNum === "number" && rawNum > 100;
+        const displayHtml = customText !== undefined ? customText : formatStatHtml(rawNum);
+        const cls = danger ? "danger-val" : (isTranscendent ? "transcendent-val" : "");
+        return `<div class="stat"><b class="${cls}">${displayHtml}</b><span>${label}</span></div>`;
+      }).join("");
+
+      $("originLine").textContent = `${game.name} · ${game.origin} (${game.social}) · Nasc. Ano ${game.birthYear}`;
+
+      $("traits").innerHTML = [
+        game.magic,
+        game.status,
+        game.grimoire ? game.grimoireType : "Sem grimório",
+        `Exp. Combate: ${game.combatExp || 0}`
+      ].map(t => `<span class="pill">${escapeHtml(t)}</span>`).join("");
+
+      // Conhecimentos Dominados
+      $("knowledgeList").innerHTML = (game.knowledge || []).length
+        ? game.knowledge.map(k => `<span class="pill knowledge">${escapeHtml(k)}</span>`).join("")
+        : `<span class="muted" style="font-size:12px;">Nenhum conhecimento mágico formal ainda.</span>`;
+
+      // Painel de Grimório & Habilidades com Nível de Domínio
+      $("grimoireHeader").textContent = game.grimoire
+        ? `Grimório & Habilidades (${game.grimoireType})`
+        : "Grimório & Habilidades";
+      $("skillsCount").textContent = (game.skills || []).length;
+
+      $("skillsList").innerHTML = (game.skills || []).length
+        ? game.skills.map(sk => {
+            const rank = getMasteryRank(sk.level);
+            const pct = clamp(Number(sk.mastery) || 0, 0, 100);
+            return `
+              <div class="skill-item">
+                <div class="skill-top">
+                  <strong>${escapeHtml(sk.name)}</strong>
+                  <span class="mp-tag">${sk.mpCost > 0 ? `${sk.mpCost} MP` : "0 MP"}</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+                  <span class="rank-tag">${escapeHtml(sk.category)} · Nv. ${sk.level}/10 (${rank})</span>
+                  <span class="muted" style="font-size:11px;">${pct}%</span>
+                </div>
+                <div class="bar-track" style="height:5px;margin-bottom:5px;">
+                  <div class="bar-fill mastery" style="width:${pct}%;"></div>
+                </div>
+                <div class="muted" style="font-size:11.5px;">${escapeHtml(sk.description)}</div>
+              </div>
+            `;
+          }).join("")
+        : (game.grimoire
+            ? "Grimório conquistado. Treine ou aja em cena para inscrever seus primeiros feitiços."
+            : "Nenhuma habilidade adquirida ainda.");
+
+      // Painel de Inventário & Equipamentos
+      $("yulBadge").textContent = `${game.yul || 0} Yuls`;
+      $("inventoryList").innerHTML = (game.inventory || []).length
+        ? game.inventory.map((item, idx) => `
+            <div class="inv-item">
+              <div class="inv-top">
+                <strong>${escapeHtml(item.name)} ${item.qty > 1 ? `(x${item.qty})` : ""}</strong>
+                <span class="pill" style="margin:0;">${item.equipped ? "✓ Equipado" : escapeHtml(item.type)}</span>
+              </div>
+              <div class="muted" style="font-size:11.5px;">${escapeHtml(item.desc)}</div>
+              ${!isDead ? `
+                <div class="inv-actions">
+                  ${(item.type === "Vestimenta" || item.type === "Arma" || item.type === "Relíquia")
+                    ? `<button type="button" class="btn subtle toggle-equip-btn" data-idx="${idx}">${item.equipped ? "Desequipar" : "Equipar"}</button>`
+                    : ""}
+                  ${item.type === "Consumível"
+                    ? `<button type="button" class="btn subtle use-item-btn" data-idx="${idx}">Usar</button>`
+                    : ""}
+                </div>
+              ` : ""}
+            </div>
+          `).join("")
+        : "Mochila vazia.";
+
+      document.querySelectorAll(".toggle-equip-btn").forEach(btn => {
+        btn.onclick = async () => {
+          const idx = Number(btn.getAttribute("data-idx"));
+          const item = game.inventory[idx];
+          if (!item) return;
+          item.equipped = !item.equipped;
+          if (item.type === "Vestimenta" && item.equipped) {
+            game.outfit = item.name;
+          }
+          render();
+          await persistSlotToDB(activeSlotId, game);
+        };
+      });
+
+      document.querySelectorAll(".use-item-btn").forEach(btn => {
+        btn.onclick = async () => {
+          if (isGenerating) return;
+          const idx = Number(btn.getAttribute("data-idx"));
+          const item = game.inventory[idx];
+          if (!item) return;
+          await runTurnWithAI(`Uso o item do meu inventário: ${item.name} (${item.desc}).`, false);
+        };
+      });
+
+      // Elenco & Vínculos
+      $("npcCount").textContent = (game.npcs || []).length;
+      $("npcList").innerHTML = (game.npcs || []).length
+        ? game.npcs.map(n => {
+            const aff = getAffinityMeta(n.affinity);
+            return `
+              <div class="npc-card">
+                <div class="npc-head">
+                  <strong>${escapeHtml(n.name)}</strong>
+                  <span class="affinity-badge ${aff.cls}">${escapeHtml(aff.label)}</span>
+                </div>
+                <div class="npc-meta">${escapeHtml(n.roleOrOrigin)}</div>
+                <div class="muted" style="font-size:12px;">${escapeHtml(n.lastEncounterNote)}</div>
+                ${!isDead ? `
+                  <div class="npc-actions">
+                    <button type="button" class="btn subtle meet-npc-btn" data-name="${escapeHtml(n.name)}">Ir ao encontro / Chamar</button>
+                  </div>
+                ` : ""}
+              </div>
+            `;
+          }).join("")
+        : "Nenhum vínculo relevante formado ainda.";
+
+      document.querySelectorAll(".meet-npc-btn").forEach(btn => {
+        btn.onclick = () => {
+          if (isGenerating) return;
+          const targetName = btn.getAttribute("data-name");
+          runTurnWithAI(`Vou procurar ${targetName} para conversar pessoalmente.`, false);
+        };
+      });
+
+      // Diário
+      $("logCount").textContent = (game.log || []).length;
+      $("journal").innerHTML = (game.log || []).length
+        ? game.log.slice(0, 18).map(item => `
+            <div class="entry">
+              <small>${escapeHtml(item.title)} · Idade ${item.age} (Ano ${item.year})</small>
+              <div>${escapeHtml(item.desc)}</div>
+            </div>
+          `).join("")
+        : "Nenhum acontecimento registrado.";
+
+      // Linha Temporal e Efeito Borboleta
+      $("worldState").textContent = game.world;
+      const bEl = $("butterflyState");
+      if (game.butterfly) {
+        bEl.textContent = `Efeito Borboleta: ${game.butterfly}`;
+        bEl.classList.remove("hidden");
+      } else {
+        bEl.classList.add("hidden");
+      }
+    }
+
+    // =========================================================================
+    // CONTROLES DE PERSISTÊNCIA, BACKUP JSON, RETRATO E EVENTOS
+    // =========================================================================
+    async function saveGame(notify = true) {
+      if (!game || !activeSlotId) return;
+      try {
+        await persistSlotToDB(activeSlotId, game);
+        if (notify) {
+          showMsg("gameMsg", `Progresso gravado com backup duplo (${activeSlotId.replace("slot_", "Slot #")}).`);
+          setTimeout(() => showMsg("gameMsg", ""), 2200);
+        }
+      } catch (e) {
+        showMsg("gameMsg", "Falha ao gravar no armazenamento local.", true);
+      }
+    }
+
+    function downloadJsonSave(dataObj, slotTag = "save") {
+      const blob = new Blob([JSON.stringify(dataObj, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `grimorio_${slotTag}_${dataObj.name.toLowerCase().replace(/\s+/g, "_")}_ano${dataObj.year}.json`;
+      a.click();
+      URL.revokeObjectURL(url);
+    }
+
+    $("createBtn").onclick = async () => {
+      const name = $("name").value.trim();
+      const magic = $("magic").value.trim();
+      if (!name || !magic) {
+        showMsg("creationMsg", "Preencha pelo menos o Nome e o Atributo Mágico para nascer no Reino Clover.", true);
+        return;
+      }
+
+      if (!activeSlotId) {
+        for (let i = 1; i <= MAX_SLOTS; i++) {
+          if (!slotsCache[`slot_${i}`]) {
+            activeSlotId = `slot_${i}`;
+            break;
+          }
+        }
+        if (!activeSlotId) activeSlotId = "slot_1";
+      }
+
+      game = rollBirthReality(
+        name,
+        magic,
+        $("appearance").value.trim(),
+        $("personality").value.trim(),
+        $("birth").value,
+        $("difficulty").value
+      );
+
+      $("creation").classList.add("hidden");
+      $("game").classList.remove("hidden");
+      $("storyText").textContent = "O fio do destino está sendo tecido no Reino Clover...";
+      render();
+      await persistSlotToDB(activeSlotId, game);
+
+      await runTurnWithAI("Nascimento e primeiros anos de vida", true);
+    };
+
+    $("actBtn").onclick = async () => {
+      if (!game || game.status === "Morto" || isGenerating) return;
+      const action = $("playerAction").value.trim();
+      if (!action) {
+        showMsg("gameMsg", "Escreva sua ação, postura ou fala direta antes de enviar.", true);
+        return;
+      }
+      $("playerAction").value = "";
+      await runTurnWithAI(action, false);
+    };
+
+    $("playerAction").addEventListener("keydown", e => {
+      if ((e.ctrlKey || e.metaKey) && e.key === "Enter") {
+        $("actBtn").click();
+      }
+    });
+
+    document.querySelectorAll(".time-btn").forEach(btn => {
+      btn.onclick = async () => {
+        if (!game || game.status === "Morto" || isGenerating) return;
+        const timeInstruction = btn.getAttribute("data-time");
+        await runTurnWithAI(timeInstruction, false);
+      };
+    });
+
+    $("saveBtn").onclick = () => saveGame(true);
+    $("lobbyBtn").onclick = async () => {
+      if (game && activeSlotId) await persistSlotToDB(activeSlotId, game);
+      renderLobby();
+    };
+    $("backToLobbyFromCreateBtn").onclick = renderLobby;
+    $("resetBtn").onclick = async () => {
+      if (game && activeSlotId) await persistSlotToDB(activeSlotId, game);
+      renderLobby();
+    };
+    $("newLifeAfterDeathBtn").onclick = async () => {
+      if (game && activeSlotId) await persistSlotToDB(activeSlotId, game);
+      renderLobby();
+    };
+
+    // Edição de Aparência / Vestimenta & Upload de Imagem Personalizada
+    $("editAppearanceBtn").onclick = () => {
+      if (!game) return;
+      $("editAppearanceInput").value = game.appearance || "";
+      $("editOutfitInput").value = game.outfit || "";
+      $("appearanceModal").classList.remove("hidden");
+    };
+    $("closeAppearanceBtn").onclick = () => $("appearanceModal").classList.add("hidden");
+    $("saveAppearanceBtn").onclick = async () => {
+      if (!game) return;
+      const newApp = $("editAppearanceInput").value.trim();
+      const newOut = $("editOutfitInput").value.trim();
+      if (newApp) game.appearance = newApp;
+      if (newOut) game.outfit = newOut;
+      $("appearanceModal").classList.add("hidden");
+      render();
+      await persistSlotToDB(activeSlotId, game);
+    };
+    $("resetCustomPhotoBtn").onclick = async () => {
+      if (!game) return;
+      game.customPortraitBase64 = "";
+      $("appearanceModal").classList.add("hidden");
+      render();
+      await persistSlotToDB(activeSlotId, game);
+    };
+
+    $("uploadPortraitBtn").onclick = () => $("portraitFileInput").click();
+    $("portraitFileInput").onchange = e => {
+      const file = e.target.files?.[0];
+      if (!file || !game) return;
+      const reader = new FileReader();
+      reader.onload = async ev => {
+        game.customPortraitBase64 = String(ev.target.result || "");
+        render();
+        await persistSlotToDB(activeSlotId, game);
+      };
+      reader.readAsDataURL(file);
+      e.target.value = "";
+    };
+
+    // Modal de Crônicas (Histórico Completo)
+    $("historyModalBtn").onclick = () => {
+      if (!game) return;
+      const body = $("historyModalBody");
+      const archive = game.sceneArchive || [];
+      body.innerHTML = archive.length
+        ? archive.map((item, idx) => `
+            <div class="archive-item">
+              <div class="archive-item-head">
+                <span>Cena #${archive.length - idx} · ${escapeHtml(item.sceneTitle)}</span>
+                <span>${escapeHtml(item.dateLabel)} · ${escapeHtml(item.location)}</span>
+              </div>
+              <div class="archive-action">Ação: ${escapeHtml(item.action)}</div>
+              <div class="archive-text">${formatNarrativeHtml(item.narrative)}</div>
+            </div>
+          `).join("")
+        : `<p class="muted">Nenhuma cena registrada ainda.</p>`;
+      $("historyModal").classList.remove("hidden");
+    };
+    $("closeHistoryBtn").onclick = () => $("historyModal").classList.add("hidden");
+    $("historyModal").onclick = e => {
+      if (e.target === $("historyModal")) $("historyModal").classList.add("hidden");
+    };
+
+    // Controles de Narração por Voz
+    $("autoTtsBtn").onclick = () => {
+      autoNarrate = !autoNarrate;
+      const btn = $("autoTtsBtn");
+      btn.textContent = autoNarrate ? "🔊 Voz Auto: ON" : "🔇 Voz Auto: OFF";
+      btn.classList.toggle("active", autoNarrate);
+      if (autoNarrate && game && game.story && !isGenerating) {
+        narrateText(game.story);
+      } else if (!autoNarrate) {
+        stopNarration();
+      }
+    };
+    $("speakSceneBtn").onclick = () => {
+      if (game && game.story) narrateText(game.story);
+    };
+    $("stopSpeechBtn").onclick = stopNarration;
+
+    // Configuração Opcional de Chave API Gemini no Lobby
+    $("toggleApiKeyBtn").onclick = () => {
+      const box = $("apiKeyConfigBox");
+      box.classList.toggle("hidden");
+      const existing = localStorage.getItem(CUSTOM_API_KEY_STORAGE) || "";
+      $("customApiKeyInput").value = existing;
+      $("apiKeyStatusText").textContent = existing ? "Chave personalizada ativa." : "Usando ambiente padrão.";
+    };
+    $("saveApiKeyBtn").onclick = () => {
+      const val = $("customApiKeyInput").value.trim();
+      if (val) {
+        localStorage.setItem(CUSTOM_API_KEY_STORAGE, val);
+        $("apiKeyStatusText").textContent = "Chave salva localmente!";
+      }
+    };
+    $("clearApiKeyBtn").onclick = () => {
+      localStorage.removeItem(CUSTOM_API_KEY_STORAGE);
+      $("customApiKeyInput").value = "";
+      $("apiKeyStatusText").textContent = "Chave removida.";
+    };
+
+    // Exportar & Importar JSON
+    $("exportBtn").onclick = () => {
+      if (game) {
+        downloadJsonSave(game, activeSlotId || "ativo");
+        return;
+      }
+      const firstSlot = Object.keys(slotsCache)[0];
+      if (firstSlot) {
+        downloadJsonSave(slotsCache[firstSlot], firstSlot);
+      } else {
+        showMsg("lobbyMsg", "Nenhuma vida gravada nos slots para exportar.", true);
+      }
+    };
+
+    const triggerImport = () => $("importFile").click();
+    $("importBtn").onclick = triggerImport;
+    $("lobbyImportBtn").onclick = triggerImport;
+
+    $("importFile").onchange = e => {
+      const file = e.target.files?.[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = async ev => {
+        try {
+          const parsed = JSON.parse(ev.target.result);
+          if (!parsed || !parsed.name || typeof parsed.age !== "number") {
+            throw new Error("Formato inválido");
+          }
+          let targetSlot = activeSlotId;
+          if (!targetSlot) {
+            for (let i = 1; i <= MAX_SLOTS; i++) {
+              if (!slotsCache[`slot_${i}`]) {
+                targetSlot = `slot_${i}`;
+                break;
+              }
+            }
+            if (!targetSlot) targetSlot = "slot_1";
+          }
+          activeSlotId = targetSlot;
+          game = migrateGameSchema(parsed);
+          await persistSlotToDB(activeSlotId, game);
+          render();
+          setBusy(false);
+        } catch (err) {
+          showMsg("lobbyMsg", "Arquivo JSON inválido para o Grimório.", true);
+        }
+      };
+      reader.readAsText(file);
+      e.target.value = "";
+    };
+
+    // Inicialização
+    window.addEventListener("DOMContentLoaded", async () => {
+      await openGrimorioDB();
+      await loadAllSlotsFromDB();
+      renderLobby();
+    });
+  </script>
+</body>
+</html>
